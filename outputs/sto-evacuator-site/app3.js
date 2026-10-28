@@ -70,7 +70,18 @@ function open(id,service=''){
     }catch(e){}
     refreshTimes();
   }
-  if(id==='accountDialog'){$('.account-tabs').hidden=false;$('.account-success').hidden=true;$$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab==='login'));$$('[data-panel]').forEach(x=>x.hidden=x.dataset.panel!=='login');}
+  if(id==='accountDialog'){
+    let u=null;
+    try{u=JSON.parse(localStorage.getItem('stoUserSession')||'null');}catch(e){}
+    if(u&&window.showUserProfile){
+      window.showUserProfile(u);
+    }else{
+      $('.account-tabs').hidden=false;
+      const prof=$('[data-user-profile]');if(prof)prof.hidden=true;
+      $$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab==='login'));
+      $$('[data-panel]').forEach(x=>x.hidden=x.dataset.panel!=='login');
+    }
+  }
   d.showModal();
 }
 function closeAll(){$$('dialog[open]').forEach(x=>x.close())}

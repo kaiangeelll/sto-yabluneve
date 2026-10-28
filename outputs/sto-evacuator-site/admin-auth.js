@@ -10,15 +10,67 @@
   const dialog=document.querySelector('#accountDialog'),
         loginForm=document.querySelector('#loginForm'),
         regForm=document.querySelector('#registerForm'),
-        adminButtons=document.querySelectorAll('[data-open-admin]'),
+        editForm=document.querySelector('#profileEditForm'),
+        adminBox=dialog?dialog.querySelector('[data-admin-panel-btn-box]'):null,
+        userTabs=dialog?dialog.querySelector('[data-user-tabs]'):null,
         loginError=dialog?dialog.querySelector('[data-login-error]'):null,
         regError=dialog?dialog.querySelector('[data-register-error]'):null,
         userBox=dialog?dialog.querySelector('[data-user-profile]'):null,
         tabs=dialog?dialog.querySelector('.account-tabs'):null,
         panels=dialog?dialog.querySelectorAll('[data-panel]'):[];
 
+  window.currentUser=null;
+
+  function renderUserBookings(user){
+    const listEl=dialog.querySelector('[data-my-bookings-list]'),
+          countEl=dialog.querySelector('[data-my-count]');
+    if(!listEl)return;
+
+    let allBookings=[];
+    try{allBookings=JSON.parse(localStorage.getItem('stoBookings')||'[]');}catch(e){}
+
+    const uPhone=(user.phone||'').replace(/\D/g,''),
+          uName=(user.name||'').toLowerCase().trim(),
+          uEmail=(user.email||'').toLowerCase().trim();
+
+    const my=allBookings.filter(b=>{
+      const bPhone=(b.phone||'').replace(/\D/g,'');
+      const bName=(b.name||'').toLowerCase().trim();
+      const bNote=(b.note||'').toLowerCase();
+      if(uPhone&&bPhone&&bPhone===uPhone)return true;
+      if(uName&&bName&&bName===uName)return true;
+      if(uEmail&&bNote.includes(uEmail))return true;
+      return false;
+    });
+
+    if(countEl)countEl.textContent=my.length;
+
+    if(!my.length){
+      listEl.innerHTML='<p style="font-size:13px;color:#6d7f70;text-align:center;padding:16px 0;">У вас поки немає активних записів. Оберіть зручний час для огляду авто!</p>';
+      return;
+    }
+
+    listEl.innerHTML=my.slice().reverse().map(b=>{
+      const isPast=b.status==='closed'||new Date(`${b.date}T${b.time}`)<new Date();
+      const badgeText=isPast?'Виконано / Минулий':'Очікує прийому';
+      const badgeClass=isPast?'booking-badge done':'booking-badge';
+      return `
+        <div class="user-booking-card">
+          <div class="user-booking-head">
+            <strong>${b.service||'Ремонт авто'}</strong>
+            <span class="${badgeClass}">${badgeText}</span>
+          </div>
+          <p class="user-booking-meta">📅 <b>${b.date}</b> об <b>${b.time}</b></p>
+          ${b.note?`<p style="font-size:12px;color:#7a8d7d;margin:4px 0 0;">Примітка: ${b.note}</p>`:''}
+        </div>
+      `;
+    }).join('');
+  }
+
   function showProfile(user){
     if(!dialog||!userBox)return;
+    window.currentUser=user;
+
     const oldSuccess=dialog.querySelector('.account-success');
     if(oldSuccess)oldSuccess.hidden=true;
     if(tabs)tabs.hidden=true;
@@ -35,7 +87,6 @@
     const phoneEl=dialog.querySelector('[data-user-phone]');
     const avatarEl=dialog.querySelector('[data-user-avatar]');
     const initialsEl=dialog.querySelector('[data-user-initials]');
-    const descEl=dialog.querySelector('[data-account-role-desc]');
 
     if(nameEl)nameEl.textContent=name;
     if(phoneEl){
@@ -58,20 +109,29 @@
     }
 
     const isAdmin=user.role==='admin'||user.is_admin===true;
-    adminButtons.forEach(b=>b.hidden=!isAdmin);
-    if(descEl){
-      descEl.textContent=isAdmin?'Ви увійшли як Адміністратор сервісу. Доступне повне керування сайтом.':'Ви увійшли в особистий кабінет. Ваші дані підставляються автоматично під час запису.';
+    if(adminBox)adminBox.hidden=!isAdmin;
+    if(userTabs)userTabs.hidden=isAdmin;
+
+    // Заповнюємо поля редагування
+    if(editForm){
+      editForm.elements.name.value=user.name||'';
+      editForm.elements.phone.value=user.phone||'';
+      editForm.elements.email.value=user.email||'';
     }
 
-    // Оновлюємо кнопки кабінету в шапці сайту
+    renderUserBookings(user);
+
+    // Оновлюємо кнопки в шапці
     const firstName=name.split(' ')[0]||'Клієнт';
     document.querySelectorAll('[data-open-account]').forEach(btn=>{
       btn.textContent=isAdmin?'Панель керування':`Кабінет (${firstName})`;
     });
   }
+  window.showUserProfile=showProfile;
 
   function resetToAuth(){
     if(!dialog)return;
+    window.currentUser=null;
     const oldSuccess=dialog.querySelector('.account-success');
     if(oldSuccess)oldSuccess.hidden=true;
     if(userBox)userBox.hidden=true;
@@ -82,13 +142,64 @@
     if(tabs){
       tabs.querySelectorAll('[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab==='login'));
     }
-    adminButtons.forEach(b=>b.hidden=true);
+    if(adminBox)adminBox.hidden=true;
     if(loginError)loginError.hidden=true;
     if(regError)regError.hidden=true;
 
     document.querySelectorAll('[data-open-account]').forEach(btn=>{
       btn.textContent='Кабінет';
     });
+  }
+
+  // Profile tabs (Bookings vs Edit)
+  dialog.querySelectorAll('[data-profile-tab]').forEach(btn=>{
+    btn.onclick=()=>{
+      dialog.querySelectorAll('[data-profile-tab]').forEach(b=>b.classList.toggle('active',b===btn));
+      const target=btn.dataset.profileTab;
+      dialog.querySelectorAll('[data-profile-panel]').forEach(p=>{
+        p.hidden=p.dataset.profilePanel!==target;
+      });
+    };
+  });
+
+  // Profile Edit Form Submit
+  if(editForm){
+    editForm.onsubmit=e=>{
+      e.preventDefault();
+      if(!window.currentUser)return;
+      const f=editForm.elements;
+      window.currentUser.name=f.name.value.trim();
+      window.currentUser.phone=f.phone.value.trim();
+      window.currentUser.email=f.email.value.trim();
+
+      localStorage.setItem('stoUserSession',JSON.stringify(window.currentUser));
+
+      let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
+      const idx=users.findIndex(u=>u.phone===window.currentUser.phone||u.email===window.currentUser.email);
+      if(idx>=0){
+        users[idx]={...users[idx],...window.currentUser};
+      }else{
+        users.push(window.currentUser);
+      }
+      localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
+
+      showProfile(window.currentUser);
+      const msg=dialog.querySelector('[data-save-msg]');
+      if(msg){
+        msg.hidden=false;
+        setTimeout(()=>{msg.hidden=true;},2500);
+      }
+    };
+  }
+
+  // New Booking Button inside profile
+  const newBookBtn=dialog.querySelector('[data-new-booking-btn]');
+  if(newBookBtn){
+    newBookBtn.onclick=()=>{
+      dialog.close();
+      const bookBtn=document.querySelector('[data-open-booking]');
+      if(bookBtn)bookBtn.click();
+    };
   }
 
   // Google OAuth
@@ -110,7 +221,7 @@
         if(authErr){
           alert('Вхід через Google зараз налаштовується в Google Cloud. Будь ласка, увійдіть за номером або поштою нижче!');
           btn.disabled=false;
-          btn.innerHTML='<svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707 0-.59.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>Увійти через Google';
+          btn.innerHTML='Увійти через Google';
         }
       }catch(err){
         alert('Вхід через Google зараз налаштовується в Google Cloud. Будь ласка, скористайтеся входом за телефоном або email нижче!');
@@ -131,6 +242,13 @@
 
   // Check existing session
   async function checkSession(){
+    const local=localStorage.getItem('stoUserSession');
+    if(local){
+      try{
+        showProfile(JSON.parse(local));
+        return;
+      }catch(e){}
+    }
     if(sb){
       try{
         const {data:{session}}=await sb.auth.getSession();
@@ -139,10 +257,6 @@
           return;
         }
       }catch(e){}
-    }
-    const local=localStorage.getItem('stoUserSession');
-    if(local){
-      try{showProfile(JSON.parse(local));}catch(e){}
     }
   }
 
@@ -179,7 +293,7 @@
         }
       }
 
-      // Якщо користувач ще не створив пароль, але ввів логін
+      // Якщо новий логін з паролем
       if(login&&password.length>=4){
         const newUser={name:login.split('@')[0],phone:login.includes('@')?'':login,email:login.includes('@')?login:'',password:password,role:'customer'};
         users.push(newUser);

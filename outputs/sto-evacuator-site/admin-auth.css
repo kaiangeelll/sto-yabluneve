@@ -52,19 +52,19 @@
   background:#f2f7f2;
   border:1px solid #d4e3d4;
   border-radius:16px;
-  padding:12px 16px;
+  padding:14px 16px;
   margin-bottom:16px;
 }
 .user-avatar{
-  width:46px;
-  height:46px;
+  width:48px;
+  height:48px;
   border-radius:50%;
   object-fit:cover;
   border:2px solid #74c043;
 }
 .user-avatar-placeholder{
-  width:46px;
-  height:46px;
+  width:48px;
+  height:48px;
   border-radius:50%;
   background:#74c043;
   color:#fff;
@@ -72,7 +72,8 @@
   align-items:center;
   justify-content:center;
   font-weight:800;
-  font-size:18px;
+  font-size:19px;
+  flex-shrink:0;
 }
 .user-info{
   flex:1;
@@ -81,11 +82,17 @@
 .user-name{
   font-weight:800;
   color:#102213;
-  font-size:15px;
+  font-size:16px;
   margin:0;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+}
+.user-phone{
+  font-size:13px;
+  font-weight:700;
+  color:#1e3d23;
+  margin:2px 0 0;
 }
 .user-email{
   font-size:12px;
@@ -97,14 +104,98 @@
 }
 .logout-btn{
   background:transparent;
-  border:1px solid #d4a373;
-  color:#8a4b22;
+  border:1px solid #c97a5d;
+  color:#9c4228;
   border-radius:10px;
   padding:6px 12px;
   font-size:12px;
   font-weight:700;
   cursor:pointer;
+  transition:all 0.2s ease;
 }
 .logout-btn:hover{
-  background:#faedcd;
+  background:#fae5df;
+}
+
+.user-subtabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:14px;
+  border-bottom:1px solid #dce8dc;
+  padding-bottom:8px;
+}
+.user-subtabs button{
+  background:none;
+  border:none;
+  font-size:14px;
+  font-weight:700;
+  color:#5f7363;
+  padding:6px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:all 0.15s ease;
+}
+.user-subtabs button.active{
+  background:#e2f0e0;
+  color:#112614;
+}
+
+.user-booking-card{
+  background:#ffffff;
+  border:1px solid #d8e5d8;
+  border-radius:12px;
+  padding:12px 14px;
+  margin-bottom:10px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.03);
+}
+.user-booking-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:6px;
+}
+.user-booking-head strong{
+  font-size:14px;
+  color:#122415;
+}
+.user-booking-meta{
+  font-size:13px;
+  color:#4f6353;
+  margin:0;
+}
+.booking-badge{
+  display:inline-block;
+  font-size:11px;
+  font-weight:800;
+  padding:3px 8px;
+  border-radius:6px;
+  background:#e5f3e5;
+  color:#246828;
+}
+.booking-badge.done{
+  background:#edf0ed;
+  color:#637766;
+}
+
+.profile-edit-form label{
+  display:block;
+  font-size:13px;
+  font-weight:700;
+  color:#203324;
+  margin-bottom:10px;
+}
+.profile-edit-form input{
+  width:100%;
+  margin-top:4px;
+  padding:9px 12px;
+  border:1px solid #c7d8c7;
+  border-radius:10px;
+  box-sizing:border-box;
+  font-size:14px;
+}
+.profile-save-msg{
+  color:#206a25;
+  font-size:13px;
+  font-weight:700;
+  margin-top:8px;
 }
