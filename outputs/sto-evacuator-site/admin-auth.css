@@ -202,3 +202,137 @@
   font-weight:700;
   margin-top:10px;
 }
+
+/* Інтерактивний календар адміна для керування графіком */
+.admin-calendar-widget {
+  background: #ffffff;
+  border: 1px solid #d9e6d9;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 8px;
+}
+.admin-cal-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.admin-cal-nav button {
+  background: #eef5ee;
+  border: 1px solid #c8dcc8;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 15px;
+}
+.admin-cal-nav strong {
+  font-size: 15px;
+  color: #122415;
+  text-transform: capitalize;
+}
+.admin-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  text-align: center;
+}
+.admin-cal-grid .week-day {
+  font-size: 11px;
+  font-weight: 800;
+  color: #728475;
+  padding: 4px 0;
+}
+.admin-cal-day-btn {
+  aspect-ratio: 1;
+  background: #f8faf8;
+  border: 1px solid #dbe6db;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.admin-cal-day-btn:hover {
+  background: #ebf5ea;
+  border-color: #74c043;
+}
+.admin-cal-day-btn.selected {
+  outline: 2px solid #233e24;
+  background: #e3f2e2;
+}
+.admin-cal-day-btn.is-closed {
+  background: #fde8e8 !important;
+  border-color: #f1a5a5 !important;
+  color: #c52222 !important;
+  font-weight: 800;
+}
+.admin-cal-day-btn.has-slots::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  background: #e67e22;
+  border-radius: 50%;
+}
+
+.admin-day-manager {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e1ece1;
+}
+.admin-day-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+.admin-toggle-whole-day {
+  background: #fdf2f2;
+  border: 1px solid #f5baba;
+  color: #ba2626;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-toggle-whole-day.active {
+  background: #d63031;
+  color: #fff;
+  border-color: #d63031;
+}
+.admin-hours-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+.admin-hour-chip {
+  padding: 8px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid #cce0cc;
+  background: #f2f9f2;
+  color: #19441c;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+.admin-hour-chip.blocked {
+  background: #fce8e8 !important;
+  border-color: #f5a8a8 !important;
+  color: #b81c1c !important;
+  text-decoration: line-through;
+}

@@ -19,7 +19,18 @@ const $=(s,p=document)=>p.querySelector(s),$$=(s,p=document)=>[...p.querySelecto
 const save=()=>localStorage.setItem('stoData',JSON.stringify(data)),saveBookings=()=>localStorage.setItem('stoBookings',JSON.stringify(bookings)),saveReviews=()=>localStorage.setItem('stoReviews',JSON.stringify(reviews));
 const split=s=>(s||'').split(';').map(x=>x.trim()).filter(Boolean),status=b=>b.status==='closed'||new Date(`${b.date}T${b.time}`)<new Date()?'Завершено':'Нова';
 
-function linkFor(kind,digits){let v=data[kind]?.trim();if(!v)return '';if(/^https?:|^viber:/.test(v))return v;if(kind==='whatsapp')return `https://wa.me/${v.replace(/\D/g,'')}`;if(kind==='viber')return `viber://chat?number=%2B${v.replace(/\D/g,'')}`;return v;}
+function linkFor(kind,digits){
+  let v=data[kind]?.trim();
+  if(!v)return '';
+  if(kind==='telegram'){
+    let u=v.replace(/^https?:\/\/t\.me\//i,'').replace(/^@/,'').trim();
+    return `https://t.me/${u}`;
+  }
+  if(/^https?:|^viber:/.test(v))return v;
+  if(kind==='whatsapp')return `https://wa.me/${v.replace(/\D/g,'')}`;
+  if(kind==='viber')return `viber://chat?number=%2B${v.replace(/\D/g,'')}`;
+  return v;
+}
 
 function render(){
   let digits=data.phone.replace(/\D/g,'');document.title=`${data.name} — ремонт авто в Новому`;
@@ -89,12 +100,130 @@ function closeAll(){$$('dialog[open]').forEach(x=>x.close())}
 function row(s=['Нова послуга','Опис послуги','від 500 ₴']){return `<div class="admin-service"><input data-k="0" value="${esc(s[0])}"><input data-k="2" value="${esc(s[2])}"><button type="button" class="remove-service">×</button></div>`}
 function bindRemove(){$$('.remove-service').forEach(x=>x.onclick=()=>x.closest('.admin-service').remove())}
 
+let adminCalDate=new Date();
+let adminSelectedDay=null;
+
+function renderAdminCal(){
+  const calGrid=$('[data-admin-cal-grid]'),
+        calTitle=$('[data-admin-cal-title]');
+  if(!calGrid||!calTitle)return;
+
+  const y=adminCalDate.getFullYear(),
+        m=adminCalDate.getMonth();
+
+  const monthNames=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
+  calTitle.textContent=`${monthNames[m]} ${y}`;
+
+  const closedDays=split(data.closedDates);
+  const closedSlots=split(data.closedSlots);
+
+  const firstDayIndex=(new Date(y,m,1).getDay()+6)%7;
+  const daysInMonth=new Date(y,m+1,0).getDate();
+
+  let html='<div class="week-day">Пн</div><div class="week-day">Вт</div><div class="week-day">Ср</div><div class="week-day">Чт</div><div class="week-day">Пт</div><div class="week-day">Сб</div><div class="week-day">Нд</div>';
+
+  for(let i=0;i<firstDayIndex;i++){html+='<span></span>';}
+
+  const pad=n=>String(n).padStart(2,'0');
+
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${y}-${pad(m+1)}-${pad(d)}`;
+    const isClosed=closedDays.includes(dateStr);
+    const hasSlots=closedSlots.some(s=>s.startsWith(dateStr));
+    const isSel=adminSelectedDay===dateStr;
+
+    let cls=['admin-cal-day-btn'];
+    if(isClosed)cls.push('is-closed');
+    if(hasSlots)cls.push('has-slots');
+    if(isSel)cls.push('selected');
+
+    html+=`<button type="button" class="${cls.join(' ')}" data-admin-day="${dateStr}">${d}</button>`;
+  }
+
+  calGrid.innerHTML=html;
+
+  $$('[data-admin-day]').forEach(btn=>{
+    btn.onclick=()=>{
+      adminSelectedDay=btn.dataset.adminDay;
+      renderAdminCal();
+      renderAdminDayDetails();
+    };
+  });
+}
+
+function renderAdminDayDetails(){
+  const dayManager=$('[data-admin-day-manager]'),
+        selLabel=$('[data-admin-selected-date]'),
+        toggleWholeBtn=$('[data-toggle-whole-day]'),
+        hoursGrid=$('[data-admin-hours-grid]');
+
+  if(!dayManager||!adminSelectedDay)return;
+  dayManager.hidden=false;
+  if(selLabel)selLabel.textContent=adminSelectedDay;
+
+  const closedDays=split(data.closedDates);
+  const isWholeClosed=closedDays.includes(adminSelectedDay);
+
+  if(toggleWholeBtn){
+    toggleWholeBtn.textContent=isWholeClosed?'✅ Відкрити день':'❌ Закрити весь день (Вихідний)';
+    toggleWholeBtn.classList.toggle('active',isWholeClosed);
+
+    toggleWholeBtn.onclick=()=>{
+      let list=split(data.closedDates);
+      if(list.includes(adminSelectedDay)){
+        list=list.filter(d=>d!==adminSelectedDay);
+      }else{
+        list.push(adminSelectedDay);
+      }
+      data.closedDates=list.join('; ');
+      const inp=$('#adminForm [name=closedDates]');
+      if(inp)inp.value=data.closedDates;
+      save();
+      renderAdminCal();
+      renderAdminDayDetails();
+      refreshTimes();
+    };
+  }
+
+  const times=['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00'];
+  const closedSlots=split(data.closedSlots);
+
+  if(hoursGrid){
+    hoursGrid.innerHTML=times.map(t=>{
+      const slotKey=`${adminSelectedDay} ${t}`;
+      const isBlocked=closedSlots.includes(slotKey);
+      return `<button type="button" class="admin-hour-chip ${isBlocked?'blocked':''}" data-hour-slot="${slotKey}">${t} ${isBlocked?'(закр.)':''}</button>`;
+    }).join('');
+
+    $$('[data-hour-slot]').forEach(b=>{
+      b.onclick=()=>{
+        const slot=b.dataset.hourSlot;
+        let slots=split(data.closedSlots);
+        if(slots.includes(slot)){
+          slots=slots.filter(s=>s!==slot);
+        }else{
+          slots.push(slot);
+        }
+        data.closedSlots=slots.join('; ');
+        const inp=$('#adminForm [name=closedSlots]');
+        if(inp)inp.value=data.closedSlots;
+        save();
+        renderAdminCal();
+        renderAdminDayDetails();
+        refreshTimes();
+      };
+    });
+  }
+}
+
 function fillAdmin(){
   let f=$('#adminForm');
   ['name','adminEmail','phone','address','hours','map','whatsapp','viber','telegram','closedDates','closedSlots'].forEach(k=>f.elements[k]?f.elements[k].value=data[k]||'':null);
   $('[data-admin-services]').innerHTML=data.services.map(row).join('');
   bindRemove();
   renderBookings();
+  renderAdminCal();
+  if(adminSelectedDay)renderAdminDayDetails();
 }
 
 function renderBookings(){
@@ -273,3 +402,8 @@ $('#adminForm').onsubmit=async e=>{
 
 render();
 syncWithCloud();
+
+const prevCalBtn=$('[data-admin-cal-prev]');
+if(prevCalBtn)prevCalBtn.onclick=()=>{adminCalDate.setMonth(adminCalDate.getMonth()-1);renderAdminCal();};
+const nextCalBtn=$('[data-admin-cal-next]');
+if(nextCalBtn)nextCalBtn.onclick=()=>{adminCalDate.setMonth(adminCalDate.getMonth()+1);renderAdminCal();};
