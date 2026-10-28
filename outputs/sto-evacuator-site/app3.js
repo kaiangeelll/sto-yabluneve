@@ -1,5 +1,5 @@
 const catalog=[['Встановлення та ремонт автокондиціонерів','Діагностика, заправка та ремонт систем кондиціювання','від 600 ₴'],['Гальмівні системи','Перевірка, ремонт і заміна компонентів гальмівної системи','від 500 ₴'],['Діагностика двигуна','Комп’ютерна та механічна діагностика двигуна','від 400 ₴'],['Автоелектрика','Пошук несправностей, проводка, стартер і генератор','від 400 ₴'],['Заміна оливи','Заміна оливи, фільтрів і технічних рідин','від 500 ₴'],['Ремонт кондиціонерів','Ремонт компресора, трубок, радіатора та витоків','від 700 ₴'],['Ремонт двигунів','Діагностика та ремонт двигуна будь-якої складності','від 1 500 ₴'],['Ремонт електрообладнання','Ремонт вузлів і електронних компонентів авто','від 500 ₴'],['Кермове керування та підвіска','Ремонт рульової системи, ходової та підвіски','від 500 ₴'],['Ремонт коробок передач','Діагностика, обслуговування та ремонт КПП','від 1 500 ₴']];
-const base={schema:3,name:'СТО Евакуатор',phone:'+380 68 067 9909',address:'вул. Яблунева, 20, Нове, Київська область, 08150',hours:'Щодня · 09:00–19:00',map:'https://maps.app.goo.gl/B1xcUJHgVeRC3Avm7',whatsapp:'',viber:'',telegram:'',closedDates:'',closedSlots:'',services:catalog};
+const base={schema:3,name:'СТО Евакуатор',adminEmail:'',phone:'+380 68 067 9909',address:'вул. Яблунева, 20, Нове, Київська область, 08150',hours:'Щодня · 09:00–19:00',map:'https://maps.app.goo.gl/B1xcUJHgVeRC3Avm7',whatsapp:'',viber:'',telegram:'',closedDates:'',closedSlots:'',services:catalog};
 let data=JSON.parse(localStorage.getItem('stoData')||'null')||base;if(data.schema!==3){data=base;localStorage.setItem('stoData',JSON.stringify(data));}
 let bookings=JSON.parse(localStorage.getItem('stoBookings')||'[]'),reviews=JSON.parse(localStorage.getItem('stoReviews')||'null')||[{name:'Клієнт Google Maps',rating:5,text:'Якісне та індивідуальне обслуговування. Рекомендую майстра.',date:'Відгук із Google Maps'},{name:'Клієнт Google Maps',rating:5,text:'Несправність усунули якісно й швидко. Тепер звертаюся сюди з усіх питань авто.',date:'Відгук із Google Maps'}];
 
@@ -91,7 +91,7 @@ function bindRemove(){$$('.remove-service').forEach(x=>x.onclick=()=>x.closest('
 
 function fillAdmin(){
   let f=$('#adminForm');
-  ['name','phone','address','hours','map','whatsapp','viber','telegram','closedDates','closedSlots'].forEach(k=>f.elements[k].value=data[k]||'');
+  ['name','adminEmail','phone','address','hours','map','whatsapp','viber','telegram','closedDates','closedSlots'].forEach(k=>f.elements[k]?f.elements[k].value=data[k]||'':null);
   $('[data-admin-services]').innerHTML=data.services.map(row).join('');
   bindRemove();
   renderBookings();
@@ -139,6 +139,7 @@ async function syncWithCloud(){
   if(cloudSettings&&cloudSettings[0]){
     const s=cloudSettings[0];
     if(s.site_name)data.name=s.site_name;
+    if(s.admin_email!==undefined)data.adminEmail=s.admin_email;
     if(s.phone)data.phone=s.phone;
     if(s.address)data.address=s.address;
     if(s.hours)data.hours=s.hours;
@@ -244,7 +245,7 @@ $('[data-add-service]').onclick=()=>{
 $('#adminForm').onsubmit=async e=>{
   e.preventDefault();
   let f=e.target;
-  ['name','phone','address','hours','map','whatsapp','viber','telegram','closedDates','closedSlots'].forEach(k=>data[k]=f.elements[k].value);
+  ['name','adminEmail','phone','address','hours','map','whatsapp','viber','telegram','closedDates','closedSlots'].forEach(k=>f.elements[k]?data[k]=f.elements[k].value:null);
   data.services=$$('[data-admin-services] .admin-service').map(r=>[r.querySelector('[data-k="0"]').value,'Опис послуги уточнює майстер',r.querySelector('[data-k="2"]').value]).filter(s=>s[0].trim());
   save();
   render();
@@ -254,6 +255,7 @@ $('#adminForm').onsubmit=async e=>{
     method:'PATCH',
     body:JSON.stringify({
       site_name:data.name,
+      admin_email:data.adminEmail||'',
       phone:data.phone,
       address:data.address,
       hours:data.hours,
