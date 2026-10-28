@@ -21,7 +21,14 @@ async function sbFetch(path,options={}){
 
 const $=(s,p=document)=>p.querySelector(s),$$=(s,p=document)=>[...p.querySelectorAll(s)],esc=s=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])),stars=n=>'★'.repeat(+n)+'☆'.repeat(5-(+n));
 const save=()=>localStorage.setItem('stoData',JSON.stringify(data)),saveBookings=()=>localStorage.setItem('stoBookings',JSON.stringify(bookings)),saveReviews=()=>localStorage.setItem('stoReviews',JSON.stringify(reviews));
-const split=s=>(s||'').split(';').map(x=>x.trim()).filter(Boolean),status=b=>b.status==='closed'||b.status==='completed'||new Date(`${b.date}T${b.time}`)<new Date()?'Завершено':'Нова';
+const split=s=>(s||'').split(';').map(x=>x.trim()).filter(Boolean);
+const status=b=>{
+  if(b.status==='closed'||b.status==='completed')return 'Завершено';
+  if(b.status==='rejected')return 'Відхилено';
+  if(b.status==='confirmed'||b.status==='accepted')return 'Підтверджено';
+  if(new Date(`${b.date}T${b.time}`)<new Date())return 'Завершено';
+  return 'Нова';
+};
 
 function linkFor(kind,digits){
   let v=data[kind]?.trim();
@@ -144,7 +151,8 @@ function unavailable(date,time){
   const isBooked=bookings.some(b=>{
     const bDate=(b.date||'').trim();
     const bTime=(b.time||'').trim().slice(0,5);
-    return bDate===date.trim() && bTime===tNorm && status(b)==='Нова';
+    const st=status(b);
+    return bDate===date.trim() && bTime===tNorm && (st==='Нова'||st==='Підтверджено');
   });
   if(isBooked)return 'Цей час уже зайнятий іншим клієнтом.';
   return '';
@@ -386,12 +394,55 @@ function fillAdmin(){
   bindRemove();
   renderBookings();
   renderAdminCal();
+  renderAdminReviews();
   if(adminSelectedDay)renderAdminDayDetails();
+}
+
+function renderAdminReviews(){
+  const container=$('[data-admin-reviews-list]');
+  const countEl=$('[data-reviews-admin-count]');
+  if(countEl)countEl.textContent=reviews.length;
+  if(!container)return;
+
+  if(!reviews.length){
+    container.innerHTML='<p class="admin-hint" style="text-align:center;padding:24px 0;">Відгуків поки немає.</p>';
+    return;
+  }
+
+  container.innerHTML=reviews.slice().reverse().map((r,revIndex)=>{
+    const realIndex=reviews.length-1-revIndex;
+    return `
+      <article class="booking-admin-card review-admin-card" style="margin-bottom:12px;">
+        <header>
+          <div>
+            <strong>${esc(r.name)}</strong> · <span class="stars" style="color:#2e7d32;">${stars(r.rating)}</span>
+          </div>
+          <time style="font-size:12px;color:#7a8d7d;">${esc(r.date||'Відгук з сайту')}</time>
+        </header>
+        <p style="margin:8px 0 12px;font-size:14px;color:#2c3e2e;line-height:1.5;">${esc(r.text)}</p>
+        <div style="display:flex;justify-content:flex-end;">
+          <button type="button" class="admin-reject-btn" data-delete-review="${realIndex}">🗑️ Видалити відгук</button>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  $$('[data-delete-review]').forEach(btn=>{
+    btn.onclick=async ()=>{
+      const idx=+btn.dataset.deleteReview;
+      if(confirm('Ви впевнені, що хочете видалити цей відгук із сайту?')){
+        reviews.splice(idx,1);
+        saveReviews();
+        render();
+        renderAdminReviews();
+      }
+    };
+  });
 }
 
 function renderBookings(){
   let t=$('[data-bookings]');if(!t)return;
-  let active=bookings.filter(b=>status(b)==='Нова').length;
+  let active=bookings.filter(b=>status(b)==='Нова'||status(b)==='Підтверджено').length;
   let done=bookings.filter(b=>status(b)==='Завершено').length;
   $$('[data-booking-count]').forEach(x=>x.textContent=active);
   const totalEl=$('[data-stat-total]');if(totalEl)totalEl.textContent=bookings.length;
@@ -401,22 +452,87 @@ function renderBookings(){
   t.innerHTML=bookings.length?bookings.slice().reverse().map(b=>{
     let st=status(b);
     const cleanPhone=esc(b.phone).replace(/\D/g,'');
+    let badgeClass='status';
+    let badgeText='🕒 Нова заявка';
+
+    if(st==='Завершено'){
+      badgeClass='status done';
+      badgeText='✅ Виконано';
+    }else if(st==='Підтверджено'){
+      badgeClass='status confirmed';
+      badgeText='🟢 Прийнято майстром';
+    }else if(st==='Відхилено'){
+      badgeClass='status rejected';
+      badgeText='❌ Відхилено';
+    }
+
     return `
-      <article class="booking-admin-card">
+      <article class="booking-admin-card ${st==='Підтверджено'?'is-confirmed':''} ${st==='Відхилено'?'is-rejected':''}">
         <header>
           <div>
             <strong>${esc(b.name)}</strong> · <span style="color:#256528;font-weight:700;">${esc(b.service)}</span>
           </div>
-          <span class="status ${st==='Завершено'?'done':''}">${st==='Завершено'?'✅ Завершено':'🕒 Нова заявка'}</span>
+          <span class="${badgeClass}">${badgeText}</span>
         </header>
         <p>
           📅 <b>${esc(b.date)}</b> об <b>${esc(b.time)}</b> · 📞 <a href="tel:${cleanPhone}" style="color:inherit;font-weight:800;text-decoration:underline;">${esc(b.phone)}</a>
           ${b.note?`<br /><span style="color:#576b5b;font-size:12px;">Примітка: ${esc(b.note)}</span>`:''}
+          ${b.reject_reason?`<br /><span style="color:#b82618;font-size:12px;font-weight:600;">Причина відхилення: ${esc(b.reject_reason)}</span>`:''}
         </p>
-        ${st==='Нова'?`<button type="button" data-close-booking="${b.id}">✓ Позначити виконаною</button>`:''}
+        <div class="admin-card-actions-row">
+          ${st==='Нова'?`
+            <button type="button" class="admin-accept-btn" data-accept-booking="${b.id}">🟢 Прийняти заявку</button>
+            <button type="button" class="admin-reject-btn" data-reject-booking="${b.id}">❌ Відхилити</button>
+          `:''}
+          ${st==='Підтверджено'?`
+            <button type="button" class="admin-accept-btn" data-close-booking="${b.id}">✓ Позначити виконаною</button>
+            <button type="button" class="admin-reject-btn" data-reject-booking="${b.id}">Скасувати / Відхилити</button>
+          `:''}
+        </div>
       </article>
     `;
   }).join(''):'<p class="admin-hint" style="text-align:center;padding:28px 0;font-size:14px;">Нових заявок поки немає.</p>';
+
+  // Прийняти заявку
+  $$('[data-accept-booking]').forEach(x=>x.onclick=async ()=>{
+    const targetId=x.dataset.acceptBooking;
+    let b=bookings.find(q=>String(q.id)===String(targetId));
+    if(b){
+      b.status='confirmed';
+      saveBookings();
+      renderBookings();
+      if(window.renderUserBookings&&window.currentUser){
+        window.renderUserBookings(window.currentUser);
+      }
+      refreshTimes();
+      try{
+        await sbFetch(`bookings?id=eq.${b.id}`,{method:'PATCH',body:JSON.stringify({status:'confirmed'})});
+      }catch(e){}
+    }
+  });
+
+  // Відхилити заявку з поясненням
+  $$('[data-reject-booking]').forEach(x=>x.onclick=async ()=>{
+    const targetId=x.dataset.rejectBooking;
+    let b=bookings.find(q=>String(q.id)===String(targetId));
+    if(b){
+      const reason=prompt('Вкажіть причину відхилення для клієнта (необов’язково):', 'На жаль, на цей час немає вільних підйомників. Оберіть інший час.');
+      if(reason===null)return; // Скасовано адміном
+      b.status='rejected';
+      b.reject_reason=reason.trim();
+      saveBookings();
+      renderBookings();
+      if(window.renderUserBookings&&window.currentUser){
+        window.renderUserBookings(window.currentUser);
+      }
+      refreshTimes();
+      try{
+        await sbFetch(`bookings?id=eq.${b.id}`,{method:'PATCH',body:JSON.stringify({status:'rejected',note:(b.note?b.note+' | ':'')+'Відхилено: '+reason.trim()})});
+      }catch(e){}
+    }
+  });
+
+  // Завершити заявку
   $$('[data-close-booking]').forEach(x=>x.onclick=async ()=>{
     const targetId=x.dataset.closeBooking;
     let b=bookings.find(q=>String(q.id)===String(targetId));
@@ -446,7 +562,8 @@ async function syncWithCloud(){
       date:b.booking_date,
       time:b.booking_time,
       note:b.note,
-      status:b.status==='completed'||b.status==='closed'?'closed':'new'
+      status:b.status==='completed'||b.status==='closed'?'closed':b.status==='confirmed'||b.status==='accepted'?'confirmed':b.status==='rejected'?'rejected':'new',
+      reject_reason:(b.note&&b.note.includes('Відхилено: '))?b.note.split('Відхилено: ')[1]:''
     }));
     saveBookings();
     renderBookings();
@@ -487,16 +604,59 @@ $('#year').textContent=new Date().getFullYear();
 $('#bookingForm [name=date]').min=new Date().toISOString().slice(0,10);
 $('#bookingForm [name=date]').onchange=refreshTimes;
 
+function formatPhone(val){
+  let digits=val.replace(/\D/g,'');
+  if(digits.startsWith('380'))digits=digits.slice(3);
+  else if(digits.startsWith('0'))digits=digits.slice(1);
+  digits=digits.slice(0,9);
+  if(!digits.length)return '';
+  let res='+380';
+  if(digits.length>0)res+=' ('+digits.slice(0,2);
+  if(digits.length>=2)res+=') '+digits.slice(2,5);
+  if(digits.length>=5)res+='-'+digits.slice(5,7);
+  if(digits.length>=7)res+='-'+digits.slice(7,9);
+  return res;
+}
+
+document.querySelectorAll('input[type=tel], input[name=phone]').forEach(inp=>{
+  inp.addEventListener('input',()=>{
+    if(!inp.value.trim())return;
+    const formatted=formatPhone(inp.value);
+    if(formatted)inp.value=formatted;
+  });
+});
+
+const copyAddrBtn=document.querySelector('[data-copy-address]');
+if(copyAddrBtn){
+  copyAddrBtn.onclick=async ()=>{
+    const fullAddr=data.address||'вул. Яблунева, 20, Нове, Київська область, 08150';
+    try{
+      await navigator.clipboard.writeText(fullAddr);
+      const prev=copyAddrBtn.textContent;
+      copyAddrBtn.textContent='✅ Адресу скопійовано!';
+      setTimeout(()=>{copyAddrBtn.textContent=prev;},2000);
+    }catch(e){
+      prompt('Скопіюйте адресу:',fullAddr);
+    }
+  };
+}
+
 $('#bookingForm').onsubmit=async e=>{
   e.preventDefault();
   let f=new FormData(e.target),
       bDate=f.get('date'),
       bTime=f.get('time'),
       bName=f.get('name'),
-      bPhone=f.get('phone'),
+      bPhone=f.get('phone')?String(f.get('phone')).trim():'',
       bEmail=f.get('email')?String(f.get('email')).trim():'',
       bService=f.get('service'),
       bNote=f.get('note');
+
+  const phoneDigits=bPhone.replace(/\D/g,'');
+  if(phoneDigits.length<10){
+    alert('Будь ласка, вкажіть коректний номер телефону (наприклад: +380 68 067 9909)');
+    return;
+  }
 
   let issue=unavailable(bDate,bTime);
   if(issue){$('[data-availability]').textContent=issue;refreshTimes();return;}
@@ -652,3 +812,9 @@ const prevCalBtn=$('[data-admin-cal-prev]');
 if(prevCalBtn)prevCalBtn.onclick=()=>{adminCalDate.setMonth(adminCalDate.getMonth()-1);renderAdminCal();};
 const nextCalBtn=$('[data-admin-cal-next]');
 if(nextCalBtn)nextCalBtn.onclick=()=>{adminCalDate.setMonth(adminCalDate.getMonth()+1);renderAdminCal();};
+
+if(window.location.search.includes('action=admin')){
+  setTimeout(()=>{
+    open('adminDialog');
+  },400);
+}

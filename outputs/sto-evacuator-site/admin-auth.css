@@ -821,3 +821,90 @@ dialog.admin-dashboard-dialog {
     grid-template-columns: 1fr 100px 34px !important;
   }
 }
+
+/* КНОПКА КОПІЮВАННЯ АДРЕСИ ТА РЯДОК */
+.address-copy-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0 16px;
+}
+.copy-address-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eef7ed;
+  border: 1px solid #c2dec0;
+  color: #1a491d;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.copy-address-btn:hover {
+  background: #d6ff4a;
+  border-color: #a4db25;
+  color: #0b1a0d;
+}
+
+/* ДІЇ НАД ЗАЯВКАМИ В АДМІНЦІ */
+.admin-card-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.admin-accept-btn {
+  background: #d6ff4a;
+  color: #102613;
+  border: 1px solid #b7e828;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.admin-accept-btn:hover {
+  background: #c8f533;
+  transform: translateY(-1px);
+}
+.admin-reject-btn {
+  background: #fff0ed;
+  color: #b82618;
+  border: 1px solid #f2bdb5;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.admin-reject-btn:hover {
+  background: #fcdbd5;
+}
+
+/* СТАТУСИ */
+.status.confirmed, .booking-badge.confirmed {
+  background: #e8f9e2;
+  color: #1b6321;
+  border: 1px solid #a4e098;
+}
+.status.rejected, .booking-badge.rejected {
+  background: #fdeeee;
+  color: #b82618;
+  border: 1px solid #f5b9b3;
+}
+.booking-admin-card.is-confirmed {
+  border-left: 4px solid #3ca848;
+}
+.booking-admin-card.is-rejected {
+  border-left: 4px solid #b82618;
+  opacity: 0.85;
+}
+.user-booking-card.is-rejected {
+  border-left: 4px solid #b82618;
+}
