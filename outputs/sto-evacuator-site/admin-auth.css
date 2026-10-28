@@ -908,3 +908,133 @@ dialog.admin-dashboard-dialog {
 .user-booking-card.is-rejected {
   border-left: 4px solid #b82618;
 }
+
+/* ВБУДОВАНИЙ КАБІНЕТ КЛІЄНТА НА ГОЛОВНІЙ СТОРІНЦІ */
+.user-inline-dashboard {
+  padding: 0 20px;
+  margin: -10px auto 40px;
+  max-width: 1240px;
+  position: relative;
+  z-index: 5;
+}
+.user-inline-card {
+  background: #ffffff;
+  border: 1.5px solid #cce4cc;
+  border-radius: 26px;
+  box-shadow: 0 12px 36px rgba(19, 38, 23, 0.09);
+  padding: 26px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.user-inline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1.5px solid #edf5ed;
+}
+.user-inline-meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.user-inline-avatar {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid #74c043;
+  box-shadow: 0 4px 14px rgba(116, 192, 67, 0.3);
+  background: #eef7ed;
+  flex-shrink: 0;
+}
+.user-inline-badge {
+  display: inline-block;
+  background: #eef7ed;
+  color: #1b6321;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.user-inline-name {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #102613;
+}
+.user-inline-contact {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #5a6e5d;
+}
+.user-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-inline-logout-btn {
+  background: #fff3f0;
+  color: #b82618;
+  border: 1px solid #f5c2b8;
+  border-radius: 12px;
+  padding: 9px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.user-inline-logout-btn:hover {
+  background: #fcdbd5;
+}
+.user-inline-bookings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.user-inline-bookings-head h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #102613;
+}
+.user-inline-bookings-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+@media (max-width: 760px) {
+  .user-inline-dashboard {
+    padding: 0 12px;
+    margin: 10px auto 30px;
+  }
+  .user-inline-card {
+    padding: 18px 16px;
+    border-radius: 20px;
+  }
+  .user-inline-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .user-inline-avatar {
+    width: 50px;
+    height: 50px;
+  }
+  .user-inline-name {
+    font-size: 20px;
+  }
+  .user-inline-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .user-inline-bookings-list {
+    grid-template-columns: 1fr;
+  }
+}

@@ -46,6 +46,36 @@
         <div class="hero-visual"><div class="glow glow-one"></div><div class="glow glow-two"></div><img class="hero-car-photo" src="hero-car.png" alt="Автомобіль у сервісній зоні" loading="eager" fetchpriority="high" /><div class="hero-card" data-hero-status-card><span><i data-status-dot class="is-open"></i> <span data-status-badge>Зараз працюємо</span></span><strong data-status-detail>Відчинено до 19:00</strong><small>вул. Яблунева, 20 · Нове</small></div></div>
       </section>
 
+      <!-- ОСОБИСТИЙ КАБІНЕТ КЛІЄНТА НА САЙТІ (КОЛИ АВТОРИЗОВАНИЙ) -->
+      <section class="user-inline-dashboard" id="userInlineDashboard" hidden>
+        <div class="user-inline-card">
+          <div class="user-inline-header">
+            <div class="user-inline-meta">
+              <img class="user-inline-avatar" data-user-inline-avatar alt="Фото профілю" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='8' r='4' fill='%232e7d32'/%3E%3Cpath d='M4 20c0-4 4-6 8-6s8 2 8 6' fill='%232e7d32'/%3E%3C/svg%3E" />
+              <div>
+                <span class="user-inline-badge">🟢 ОСОБИСТИЙ КАБІНЕТ КЛІЄНТА</span>
+                <h2 class="user-inline-name">Вітаємо, <span data-user-inline-name>Олександр</span>!</h2>
+                <p class="user-inline-contact">✉️ <span data-user-inline-email>user@gmail.com</span> <span class="sep">·</span> 📞 <span data-user-inline-phone>номер не вказано</span></p>
+              </div>
+            </div>
+            <div class="user-inline-actions">
+              <button type="button" class="button light compact" data-open-account>Редагувати профіль ⚙️</button>
+              <button type="button" class="user-inline-logout-btn" data-logout>Вийти з акаунта</button>
+            </div>
+          </div>
+
+          <div class="user-inline-body">
+            <div class="user-inline-bookings-head">
+              <h3>📋 Ваші заявки та статус ремонту (<span data-user-active-count>0</span>)</h3>
+              <button type="button" class="button compact" data-open-booking>+ Записатися на сервіс</button>
+            </div>
+            <div class="user-inline-bookings-list" data-my-inline-bookings-list>
+              <!-- Список заявок клієнта -->
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="service-section" id="services"><div class="section-head"><div><p class="eyebrow">ПРАЙС-ЛИСТ</p><h2>Що зробимо для авто</h2></div><p>Фінальна ціна залежить від марки авто та обсягу робіт. Усе погодимо до початку ремонту.</p></div><div class="services" data-services></div></section>
 
       <section class="booking-banner"><div><p class="eyebrow">ОНЛАЙН-ЗАПИС</p><h2>Не чекайте в черзі.</h2><p>Залиште номер і виберіть послугу — адміністратор зателефонує, щоб підтвердити запис.</p></div><button class="button light" data-open-booking>Обрати час <span>→</span></button></section>

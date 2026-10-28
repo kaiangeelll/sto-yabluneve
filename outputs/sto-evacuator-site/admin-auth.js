@@ -29,9 +29,9 @@
   window.currentUser=null;
 
   function renderUserBookings(user){
-    const listEl=dialog.querySelector('[data-my-bookings-list]'),
-          countEl=dialog.querySelector('[data-my-count]');
-    if(!listEl)return;
+    const listEls=document.querySelectorAll('[data-my-bookings-list], [data-my-inline-bookings-list]'),
+          countEls=document.querySelectorAll('[data-my-count], [data-user-active-count]');
+    if(!listEls.length)return;
 
     let allBookings=[];
     try{allBookings=JSON.parse(localStorage.getItem('stoBookings')||'[]');}catch(e){}
@@ -52,125 +52,141 @@
       return false;
     });
 
-    if(countEl)countEl.textContent=my.length;
+    countEls.forEach(c=>c.textContent=my.length);
 
+    let html='';
     if(!my.length){
-      listEl.innerHTML='<p style="font-size:13px;color:#6d7f70;text-align:center;padding:16px 0;">У вас поки немає активних записів. Оберіть зручний час для огляду авто!</p>';
-      return;
+      html='<p style="font-size:13px;color:#6d7f70;text-align:center;padding:16px 0;grid-column:1/-1;">У вас поки немає активних записів. Натисніть кнопку «+ Записатися на сервіс», щоб обрати зручний час!</p>';
+    }else{
+      html=my.slice().reverse().map(b=>{
+        const isCompleted=b.status==='closed'||b.status==='completed';
+        const isConfirmed=b.status==='confirmed'||b.status==='accepted';
+        const isRejected=b.status==='rejected';
+        const isPastDate=!isCompleted&&!isRejected&&new Date(`${b.date}T${b.time}`)<new Date();
+
+        let badgeText='🕒 Очікує підтвердження';
+        let badgeClass='booking-badge pending';
+        let hintText='Майстер невдовзі зателефонує або підтвердить запис.';
+
+        if(isCompleted){
+          badgeText='✅ Виконано';
+          badgeClass='booking-badge done';
+          hintText='Обслуговування успішно завершено.';
+        }else if(isConfirmed){
+          badgeText='🟢 Прийнято майстром';
+          badgeClass='booking-badge confirmed';
+          hintText='Чекаємо вас на СТО у призначений час!';
+        }else if(isRejected){
+          badgeText='❌ Відхилено';
+          badgeClass='booking-badge rejected';
+          hintText=b.reject_reason?`Причина: ${b.reject_reason}`:'На цей час немає вільного місця. Будь ласка, оберіть інший день.';
+        }else if(isPastDate){
+          badgeText='Минулий візит';
+          badgeClass='booking-badge past';
+          hintText='';
+        }
+
+        return `
+          <div class="user-booking-card ${isCompleted?'is-done':''} ${isRejected?'is-rejected':''}">
+            <div class="user-booking-head">
+              <strong>${b.service||'Ремонт авто'}</strong>
+              <span class="${badgeClass}">${badgeText}</span>
+            </div>
+            <p class="user-booking-meta">📅 <b>${b.date}</b> об <b>${b.time}</b></p>
+            ${hintText?`<p style="font-size:12px;color:${isRejected?'#c0392b':'#276d33'};margin:3px 0 0;font-weight:600;">${hintText}</p>`:''}
+            ${b.note?`<p style="font-size:12px;color:#7a8d7d;margin:4px 0 0;">Примітка: ${b.note}</p>`:''}
+          </div>
+        `;
+      }).join('');
     }
 
-    listEl.innerHTML=my.slice().reverse().map(b=>{
-      const isCompleted=b.status==='closed'||b.status==='completed';
-      const isConfirmed=b.status==='confirmed'||b.status==='accepted';
-      const isRejected=b.status==='rejected';
-      const isPastDate=!isCompleted&&!isRejected&&new Date(`${b.date}T${b.time}`)<new Date();
-
-      let badgeText='🕒 Очікує підтвердження';
-      let badgeClass='booking-badge pending';
-      let hintText='Майстер невдовзі зателефонує або підтвердить запис.';
-
-      if(isCompleted){
-        badgeText='✅ Виконано';
-        badgeClass='booking-badge done';
-        hintText='Обслуговування успішно завершено.';
-      }else if(isConfirmed){
-        badgeText='🟢 Прийнято майстром';
-        badgeClass='booking-badge confirmed';
-        hintText='Чекаємо вас на СТО у призначений час!';
-      }else if(isRejected){
-        badgeText='❌ Відхилено';
-        badgeClass='booking-badge rejected';
-        hintText=b.reject_reason?`Причина: ${b.reject_reason}`:'На цей час немає вільного місця. Будь ласка, оберіть інший день.';
-      }else if(isPastDate){
-        badgeText='Минулий візит';
-        badgeClass='booking-badge past';
-        hintText='';
-      }
-
-      return `
-        <div class="user-booking-card ${isCompleted?'is-done':''} ${isRejected?'is-rejected':''}">
-          <div class="user-booking-head">
-            <strong>${b.service||'Ремонт авто'}</strong>
-            <span class="${badgeClass}">${badgeText}</span>
-          </div>
-          <p class="user-booking-meta">📅 <b>${b.date}</b> об <b>${b.time}</b></p>
-          ${hintText?`<p style="font-size:12px;color:${isRejected?'#c0392b':'#276d33'};margin:3px 0 0;font-weight:600;">${hintText}</p>`:''}
-          ${b.note?`<p style="font-size:12px;color:#7a8d7d;margin:4px 0 0;">Примітка: ${b.note}</p>`:''}
-        </div>
-      `;
-    }).join('');
+    listEls.forEach(el=>el.innerHTML=html);
   }
 
   function showProfile(user){
-    if(!dialog)return;
     window.currentUser=user;
     try{
       localStorage.setItem('stoUserSession',JSON.stringify(user));
     }catch(e){}
-
-    if(guestView)guestView.hidden=true;
-    if(userView)userView.hidden=false;
 
     const name=user.name||user.user_metadata?.full_name||user.user_metadata?.name||'Клієнт';
     const email=user.email||'';
     const phone=user.phone||'';
     const avatar=user.user_metadata?.avatar_url||user.user_metadata?.picture;
 
-    const nameEl=dialog.querySelector('[data-user-name]');
-    const emailEl=dialog.querySelector('[data-user-email]');
-    const phoneEl=dialog.querySelector('[data-user-phone]');
-    const avatarEl=dialog.querySelector('[data-user-avatar]');
-    const initialsEl=dialog.querySelector('[data-user-initials]');
+    // 1. Відображення на головній сторінці (Особистий кабінет клієнта)
+    const inlineDash=document.querySelector('#userInlineDashboard');
+    if(inlineDash){
+      inlineDash.hidden=false;
+      const inName=inlineDash.querySelector('[data-user-inline-name]');
+      const inEmail=inlineDash.querySelector('[data-user-inline-email]');
+      const inPhone=inlineDash.querySelector('[data-user-inline-phone]');
+      const inAvatar=inlineDash.querySelector('[data-user-inline-avatar]');
 
-    if(nameEl)nameEl.textContent=name;
-    if(phoneEl){
-      phoneEl.textContent=phone?'тел: '+phone:'';
-      phoneEl.hidden=!phone;
-    }
-    if(emailEl){
-      emailEl.textContent=email?'email: '+email:'';
-      emailEl.hidden=!email;
-    }
-
-    if(avatar&&avatarEl){
-      avatarEl.src=avatar;
-      avatarEl.hidden=false;
-      if(initialsEl)initialsEl.hidden=true;
-    }else if(initialsEl){
-      const cleanLetters=(name||'').replace(/[^a-zA-Zа-яА-ЯіІїЇєЄґҐ]/g,'');
-      initialsEl.textContent=(cleanLetters[0]||'К').toUpperCase();
-      initialsEl.hidden=false;
-      if(avatarEl)avatarEl.hidden=true;
+      if(inName)inName.textContent=name;
+      if(inEmail)inEmail.textContent=email||'Google аккаунт';
+      if(inPhone)inPhone.textContent=phone?phone:'номер не вказано';
+      if(inAvatar&&avatar)inAvatar.src=avatar;
     }
 
-    const isAdmin=user.role==='admin'||user.is_admin===true;
-    if(adminBox)adminBox.hidden=!isAdmin;
-    if(userTabs)userTabs.hidden=isAdmin;
-    dialog.querySelectorAll('[data-profile-panel]').forEach(p=>{
-      p.hidden=isAdmin;
-    });
+    // 2. Відображення у спливаючому вікні
+    if(dialog){
+      if(guestView)guestView.hidden=true;
+      if(userView)userView.hidden=false;
 
-    // Заповнюємо поля редагування
-    if(editForm){
-      editForm.elements.name.value=user.name||'';
-      editForm.elements.phone.value=user.phone||'';
-      editForm.elements.email.value=user.email||'';
+      const nameEl=dialog.querySelector('[data-user-name]');
+      const emailEl=dialog.querySelector('[data-user-email]');
+      const phoneEl=dialog.querySelector('[data-user-phone]');
+      const avatarEl=dialog.querySelector('[data-user-avatar]');
+      const initialsEl=dialog.querySelector('[data-user-initials]');
+
+      if(nameEl)nameEl.textContent=name;
+      if(phoneEl){
+        phoneEl.textContent=phone?'тел: '+phone:'';
+        phoneEl.hidden=!phone;
+      }
+      if(emailEl){
+        emailEl.textContent=email?'email: '+email:'';
+        emailEl.hidden=!email;
+      }
+
+      if(avatar&&avatarEl){
+        avatarEl.src=avatar;
+        avatarEl.hidden=false;
+        if(initialsEl)initialsEl.hidden=true;
+      }else if(initialsEl){
+        const cleanLetters=(name||'').replace(/[^a-zA-Zа-яА-ЯіІїЇєЄґҐ]/g,'');
+        initialsEl.textContent=(cleanLetters[0]||'К').toUpperCase();
+        initialsEl.hidden=false;
+        if(avatarEl)avatarEl.hidden=true;
+      }
+
+      const isAdmin=user.role==='admin'||user.is_admin===true;
+      if(adminBox)adminBox.hidden=!isAdmin;
+      if(userTabs)userTabs.hidden=isAdmin;
+      dialog.querySelectorAll('[data-profile-panel]').forEach(p=>{
+        p.hidden=isAdmin;
+      });
+
+      if(editForm){
+        editForm.elements.name.value=user.name||'';
+        editForm.elements.phone.value=user.phone||'';
+        editForm.elements.email.value=user.email||'';
+      }
     }
 
-    renderUserBookings(user);
-
-    // Оновлюємо кнопки в шапці
+    // 3. Оновлюємо кнопки в шапці сайту
     const firstName=name.split(' ')[0]||'Клієнт';
     document.querySelectorAll('[data-account-btn-text]').forEach(t=>{
-      t.textContent=isAdmin?'Панель керування':`Кабінет (${firstName})`;
+      t.textContent=user.role==='admin'?'Панель керування':`Кабінет (${firstName})`;
     });
     document.querySelectorAll('[data-open-account]').forEach(btn=>{
-      btn.title=isAdmin?'Панель керування':'Особистий кабінет';
-      btn.classList.toggle('is-admin',isAdmin);
+      btn.title=user.role==='admin'?'Панель керування':'Особистий кабінет';
+      btn.classList.toggle('is-admin',user.role==='admin');
     });
 
     document.querySelectorAll('[data-open-booking]').forEach(btn=>{
-      if(isAdmin){
+      if(user.role==='admin'){
         btn.setAttribute('data-admin-active','true');
         btn.title='Адміністратор керує заявками в Панелі керування';
       }else{
@@ -178,26 +194,35 @@
         btn.title='';
       }
     });
+
+    renderUserBookings(user);
   }
   window.showUserProfile=showProfile;
   window.renderUserBookings=renderUserBookings;
 
   function resetToAuth(){
-    if(!dialog)return;
     window.currentUser=null;
-    if(userView)userView.hidden=true;
-    if(guestView)guestView.hidden=false;
+    localStorage.removeItem('stoUserSession');
 
-    if(tabs)tabs.hidden=false;
-    panels.forEach(p=>{
-      p.hidden=p.dataset.panel!=='login';
-    });
-    if(tabs){
-      tabs.querySelectorAll('[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab==='login'));
+    // Ховаємо кабінет на сторінці
+    const inlineDash=document.querySelector('#userInlineDashboard');
+    if(inlineDash)inlineDash.hidden=true;
+
+    if(dialog){
+      if(userView)userView.hidden=true;
+      if(guestView)guestView.hidden=false;
+
+      if(tabs)tabs.hidden=false;
+      panels.forEach(p=>{
+        p.hidden=p.dataset.panel!=='login';
+      });
+      if(tabs){
+        tabs.querySelectorAll('[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab==='login'));
+      }
+      if(adminBox)adminBox.hidden=true;
+      if(loginError)loginError.hidden=true;
+      if(regError)regError.hidden=true;
     }
-    if(adminBox)adminBox.hidden=true;
-    if(loginError)loginError.hidden=true;
-    if(regError)regError.hidden=true;
 
     document.querySelectorAll('[data-account-btn-text]').forEach(t=>{
       t.textContent='Кабінет';
@@ -350,33 +375,64 @@
     });
   }
 
-  // Logout
-  const logoutBtn=dialog?dialog.querySelector('[data-logout]'):null;
-  if(logoutBtn){
-    logoutBtn.onclick=async ()=>{
+  // Logout (і на сторінці, і в модалці)
+  document.querySelectorAll('[data-logout]').forEach(btn=>{
+    btn.onclick=async ()=>{
       if(sb)try{await sb.auth.signOut();}catch(e){}
-      localStorage.removeItem('stoUserSession');
       resetToAuth();
     };
-  }
+  });
 
-  // Check existing session
+  // Check existing session & direct OAuth parser
   async function checkSession(){
-    const hash=window.location.hash||'';
-    const search=window.location.search||'';
-    const hasOAuthParams=hash.includes('access_token')||hash.includes('refresh_token')||search.includes('code=');
+    const hash=window.location.hash?window.location.hash.substring(1):'';
+    const search=window.location.search?window.location.search.substring(1):'';
 
-    // 1. Читаємо збережену сесію з localStorage
-    const local=localStorage.getItem('stoUserSession');
-    if(local){
+    // 1. ПРЯМИЙ РОЗБІР ACCESS_TOKEN З URL (Миттєво після повернення з Google)
+    if(hash.includes('access_token=')){
       try{
-        const u=JSON.parse(local);
-        showProfile(u);
-      }catch(e){}
+        const params={};
+        hash.split('&').forEach(part=>{
+          const [k,v]=part.split('=');
+          if(k&&v)params[decodeURIComponent(k)]=decodeURIComponent(v);
+        });
+
+        if(params.access_token){
+          const parts=params.access_token.split('.');
+          if(parts[1]){
+            const base64=parts[1].replace(/-/g,'+').replace(/_/g,'/');
+            const jsonStr=decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            const payload=JSON.parse(jsonStr);
+
+            const meta=payload.user_metadata||{};
+            const userFromToken={
+              id:payload.sub,
+              name:meta.full_name||meta.name||(payload.email?payload.email.split('@')[0]:'Клієнт Google'),
+              email:payload.email||'',
+              phone:payload.phone||'',
+              role:'customer',
+              provider:'google',
+              user_metadata:meta
+            };
+
+            saveAndActivateUser(userFromToken,true);
+
+            if(sb&&params.refresh_token){
+              sb.auth.setSession({
+                access_token:params.access_token,
+                refresh_token:params.refresh_token
+              }).catch(()=>{});
+            }
+            return;
+          }
+        }
+      }catch(err){
+        console.warn('Direct hash parse error:',err);
+      }
     }
 
-    // 2. Якщо це редірект PKCE з кодом ?code=
-    if(sb&&search.includes('code=')){
+    // 2. Якщо повернулися з Google з кодом PKCE ?code=
+    if(search.includes('code=')&&sb){
       try{
         const params=new URLSearchParams(search);
         const code=params.get('code');
@@ -392,12 +448,35 @@
       }
     }
 
-    // 3. Перевіряємо сесію Supabase (у т.ч. токени з hash)
+    // 3. Читаємо збережену сесію з localStorage
+    const local=localStorage.getItem('stoUserSession');
+    if(local){
+      try{
+        const u=JSON.parse(local);
+        showProfile(u);
+        return;
+      }catch(e){}
+    }
+
+    // 4. Сесія Supabase у localStorage
+    const sbLocalKey='sb-nabwuaxzogfuzaznvmph-auth-token';
+    const sbRaw=localStorage.getItem(sbLocalKey);
+    if(sbRaw){
+      try{
+        const parsed=JSON.parse(sbRaw);
+        if(parsed?.user){
+          saveAndActivateUser(parsed.user,false);
+          return;
+        }
+      }catch(e){}
+    }
+
+    // 5. Запит до getSession()
     if(sb){
       try{
         const {data:{session}}=await sb.auth.getSession();
         if(session?.user){
-          saveAndActivateUser(session.user,hasOAuthParams);
+          saveAndActivateUser(session.user,false);
           return;
         }
       }catch(e){}
