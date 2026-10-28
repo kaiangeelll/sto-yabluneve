@@ -1187,12 +1187,22 @@ body.is-admin-session [data-new-booking-btn] {
 }
 
 /* ВБУДОВАНИЙ КАБІНЕТ КЛІЄНТА НА ГОЛОВНІЙ СТОРІНЦІ */
+.header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+}
+
 .user-inline-dashboard {
   padding: 0 20px;
-  margin: -10px auto 40px;
+  margin: 30px auto 40px;
   max-width: 1240px;
   position: relative;
-  z-index: 5;
+  z-index: 1;
+}
+
+body.is-admin-session #userInlineDashboard {
+  display: none !important;
 }
 .user-inline-card {
   background: #ffffff;

@@ -127,24 +127,31 @@
       localStorage.setItem('stoUserSession',JSON.stringify(user));
     }catch(e){}
 
+    const isAdmin=user.role==='admin'||user.is_admin===true;
+    document.body.classList.toggle('is-admin-session',isAdmin);
+
     const name=user.name||user.user_metadata?.full_name||user.user_metadata?.name||'Клієнт';
     const email=user.email||'';
     const phone=user.phone||'';
     const avatar=user.user_metadata?.avatar_url||user.user_metadata?.picture;
 
-    // 1. Відображення на головній сторінці (Особистий кабінет клієнта)
+    // 1. Відображення на головній сторінці (Особистий кабінет клієнта) — тільки для звичайних клієнтів, не для адміна!
     const inlineDash=document.querySelector('#userInlineDashboard');
     if(inlineDash){
-      inlineDash.hidden=false;
-      const inName=inlineDash.querySelector('[data-user-inline-name]');
-      const inEmail=inlineDash.querySelector('[data-user-inline-email]');
-      const inPhone=inlineDash.querySelector('[data-user-inline-phone]');
-      const inAvatar=inlineDash.querySelector('[data-user-inline-avatar]');
+      if(isAdmin){
+        inlineDash.hidden=true;
+      }else{
+        inlineDash.hidden=false;
+        const inName=inlineDash.querySelector('[data-user-inline-name]');
+        const inEmail=inlineDash.querySelector('[data-user-inline-email]');
+        const inPhone=inlineDash.querySelector('[data-user-inline-phone]');
+        const inAvatar=inlineDash.querySelector('[data-user-inline-avatar]');
 
-      if(inName)inName.textContent=name;
-      if(inEmail)inEmail.textContent=email||'Google аккаунт';
-      if(inPhone)inPhone.textContent=phone?phone:'номер не вказано';
-      if(inAvatar&&avatar)inAvatar.src=avatar;
+        if(inName)inName.textContent=name;
+        if(inEmail)inEmail.textContent=email||'Google аккаунт';
+        if(inPhone)inPhone.textContent=phone?phone:'номер не вказано';
+        if(inAvatar&&avatar)inAvatar.src=avatar;
+      }
     }
 
     // 2. Відображення у спливаючому вікні

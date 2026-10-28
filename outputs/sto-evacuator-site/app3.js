@@ -478,7 +478,13 @@ function renderBookings(){
       }
       const choice=confirm('Ви впевнені, що хочете очистити тестові заявки?\nНатисніть OK для повного видалення.');
       if(!choice)return;
-      const idsToDelete=bookings.map(b=>b.id);
+      const idsToDelete=bookings.map(b=>String(b.id));
+      let deletedIds=JSON.parse(localStorage.getItem('stoDeletedBookingIds')||'[]');
+      idsToDelete.forEach(id=>{
+        if(!deletedIds.includes(id))deletedIds.push(id);
+      });
+      localStorage.setItem('stoDeletedBookingIds',JSON.stringify(deletedIds));
+
       bookings=[];
       saveBookings();
       renderBookings();
@@ -487,7 +493,10 @@ function renderBookings(){
       }
       refreshTimes();
       for(const id of idsToDelete){
-        try{await sbFetch(`bookings?id=eq.${id}`,{method:'DELETE'});}catch(e){}
+        try{
+          await sbFetch(`bookings?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({status:'deleted'})});
+          await sbFetch(`bookings?id=eq.${id}`,{method:'DELETE'});
+        }catch(e){}
       }
       alert('Заявки успішно очищено!');
     };
@@ -660,6 +669,14 @@ function renderBookings(){
   $$('[data-delete-booking]').forEach(x=>x.onclick=async ()=>{
     const targetId=x.dataset.deleteBooking;
     if(!confirm('Видалити цю заявку назавжди?'))return;
+
+    // Зберігаємо ID у список видалених, щоб хмара ніколи не повертала видалені заявки
+    let deletedIds=JSON.parse(localStorage.getItem('stoDeletedBookingIds')||'[]');
+    if(!deletedIds.includes(String(targetId))){
+      deletedIds.push(String(targetId));
+      localStorage.setItem('stoDeletedBookingIds',JSON.stringify(deletedIds));
+    }
+
     bookings=bookings.filter(q=>String(q.id)!==String(targetId));
     saveBookings();
     renderBookings();
@@ -667,26 +684,31 @@ function renderBookings(){
       window.renderUserBookings(window.currentUser);
     }
     refreshTimes();
+
     try{
+      await sbFetch(`bookings?id=eq.${targetId}`,{method:'PATCH',body:JSON.stringify({status:'deleted'})});
       await sbFetch(`bookings?id=eq.${targetId}`,{method:'DELETE'});
     }catch(e){}
   });
 }
 
 async function syncWithCloud(){
-  const cloudBookings=await sbFetch('bookings?select=*&order=created_at.desc');
+  const cloudBookings=await sbFetch('bookings?status=neq.deleted&select=*&order=created_at.desc');
   if(cloudBookings&&Array.isArray(cloudBookings)){
-    bookings=cloudBookings.map(b=>({
-      id:b.id,
-      name:b.name,
-      phone:b.phone,
-      service:b.service_name,
-      date:b.booking_date,
-      time:b.booking_time,
-      note:b.note,
-      status:b.status==='archived'?'archived':b.status==='completed'||b.status==='closed'?'closed':b.status==='confirmed'||b.status==='accepted'?'confirmed':b.status==='rejected'?'rejected':'new',
-      reject_reason:(b.note&&b.note.includes('Відхилено: '))?b.note.split('Відхилено: ')[1]:''
-    }));
+    const deletedIds=JSON.parse(localStorage.getItem('stoDeletedBookingIds')||'[]');
+    bookings=cloudBookings
+      .filter(b=>b.status!=='deleted'&&!deletedIds.includes(String(b.id)))
+      .map(b=>({
+        id:b.id,
+        name:b.name,
+        phone:b.phone,
+        service:b.service_name,
+        date:b.booking_date,
+        time:b.booking_time,
+        note:b.note,
+        status:b.status==='archived'?'archived':b.status==='completed'||b.status==='closed'?'closed':b.status==='confirmed'||b.status==='accepted'?'confirmed':b.status==='rejected'?'rejected':'new',
+        reject_reason:(b.note&&b.note.includes('Відхилено: '))?b.note.split('Відхилено: ')[1]:''
+      }));
     saveBookings();
     renderBookings();
     refreshTimes();
