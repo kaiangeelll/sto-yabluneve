@@ -232,8 +232,12 @@ function open(id,service=''){
     if(service)$('[data-service-options]').value=service;
     if(u){
       if(u.name&&u.role!=='admin')$('#bookingForm [name=name]').value=u.name;
-      if(u.phone)$('#bookingForm [name=phone]').value=u.phone;
+      const bGroup=$('#bookingForm [data-phone-group]');
+      if(window.setPhoneGroupValue&&bGroup)window.setPhoneGroupValue(bGroup,u.phone||'');
       if(u.email&&$('#bookingForm [name=email]'))$('#bookingForm [name=email]').value=u.email;
+    }else{
+      const bGroup=$('#bookingForm [data-phone-group]');
+      if(window.setPhoneGroupValue&&bGroup)window.setPhoneGroupValue(bGroup,'');
     }
     refreshTimes();
   }
@@ -619,7 +623,7 @@ function formatPhone(val){
   return res;
 }
 
-document.querySelectorAll('input[type=tel], input[name=phone]').forEach(inp=>{
+document.querySelectorAll('input[type=tel]:not([data-phone-local]), input[name=phone]:not([data-phone-hidden])').forEach(inp=>{
   inp.addEventListener('input',()=>{
     if(!inp.value.trim())return;
     const formatted=formatPhone(inp.value);

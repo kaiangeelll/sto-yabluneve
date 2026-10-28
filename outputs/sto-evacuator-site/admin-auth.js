@@ -187,7 +187,12 @@
 
       if(editForm){
         editForm.elements.name.value=user.name||'';
-        editForm.elements.phone.value=user.phone||'';
+        const eg=editForm.querySelector('[data-phone-group]');
+        if(window.setPhoneGroupValue&&eg){
+          window.setPhoneGroupValue(eg,user.phone||'');
+        }else if(editForm.elements.phone){
+          editForm.elements.phone.value=user.phone||'';
+        }
         editForm.elements.email.value=user.email||'';
       }
     }

@@ -32,6 +32,179 @@
   color:#112614;
 }
 
+/* Phone Country Picker & National Input Styles */
+.phone-group {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.phone-prefix-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #f1f7f1;
+  border: 1px solid #ccd4d7;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a321d;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.phone-prefix-btn:hover {
+  background: #e4f0e4;
+  border-color: #74c043;
+}
+
+.phone-prefix-btn.is-active {
+  background: #def0de;
+  border-color: #2e7d32;
+}
+
+.phone-prefix-btn .phone-flag {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.phone-prefix-btn .phone-dial {
+  font-size: 14px;
+  font-weight: 700;
+  color: #17321a;
+}
+
+.phone-prefix-btn .phone-arrow {
+  font-size: 10px;
+  color: #617764;
+  margin-left: 2px;
+  transition: transform 0.2s ease;
+}
+
+.phone-prefix-btn.is-active .phone-arrow {
+  transform: rotate(180deg);
+}
+
+.phone-local-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #ccd4d7 !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding: 12px 14px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #122415 !important;
+  background: #ffffff !important;
+  outline: none !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.phone-local-input:focus {
+  border-color: #2e7d32 !important;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15) !important;
+}
+
+.phone-dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  z-index: 99999;
+  width: 290px;
+  max-width: 92vw;
+  background: #ffffff;
+  border: 1px solid #bed2bf;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(18, 36, 21, 0.18);
+  overflow: hidden;
+  animation: phoneDropIn 0.15s ease-out;
+}
+
+@keyframes phoneDropIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.phone-dropdown-search {
+  padding: 8px;
+  border-bottom: 1px solid #e5eee5;
+  background: #f7faf7;
+}
+
+.phone-search-input {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  border: 1px solid #c4d7c5 !important;
+  border-radius: 6px !important;
+  padding: 7px 10px !important;
+  font-size: 13px !important;
+  background: #ffffff !important;
+  outline: none !important;
+}
+
+.phone-search-input:focus {
+  border-color: #2e7d32 !important;
+}
+
+.phone-dropdown-list {
+  max-height: 210px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 0;
+}
+
+.phone-country-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  color: #172b1a;
+  transition: background 0.12s ease;
+}
+
+.phone-country-item:hover,
+.phone-country-item.is-selected {
+  background: #eaf5ea;
+}
+
+.phone-country-item .item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.phone-country-item .item-flag {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.phone-country-item .item-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.phone-country-item .item-dial {
+  font-weight: 700;
+  color: #2e7d32;
+  margin-left: 8px;
+  font-size: 12px;
+}
+
 .oauth-divider{
   display:flex;
   align-items:center;
