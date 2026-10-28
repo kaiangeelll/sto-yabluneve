@@ -23,12 +23,21 @@ const $=(s,p=document)=>p.querySelector(s),$$=(s,p=document)=>[...p.querySelecto
 const save=()=>localStorage.setItem('stoData',JSON.stringify(data)),saveBookings=()=>localStorage.setItem('stoBookings',JSON.stringify(bookings)),saveReviews=()=>localStorage.setItem('stoReviews',JSON.stringify(reviews));
 const split=s=>(s||'').split(';').map(x=>x.trim()).filter(Boolean);
 const status=b=>{
+  if(b.status==='cancelled')return 'Скасовано клієнтом';
+  if(b.status==='reschedule_requested')return 'Запит на перенесення';
+  if(b.status==='reschedule_rejected')return 'Перенесення відхилено';
   if(b.status==='closed'||b.status==='completed')return 'Завершено';
   if(b.status==='rejected')return 'Відхилено';
   if(b.status==='confirmed'||b.status==='accepted')return 'Підтверджено';
   if(new Date(`${b.date}T${b.time}`)<new Date())return 'Завершено';
   return 'Нова';
 };
+
+function reloadBookings(){
+  try{
+    bookings=JSON.parse(localStorage.getItem('stoBookings')||'[]');
+  }catch(e){}
+}
 
 function linkFor(kind,digits){
   let v=data[kind]?.trim();
@@ -138,7 +147,7 @@ function render(){
   updateHeroStatus();
 }
 
-function unavailable(date,time){
+function unavailable(date,time,ignoreBookingId=null){
   if(!date||!time)return '';
   const d=new Date(date+'T12:00:00');
   const day=d.getDay();
@@ -149,10 +158,14 @@ function unavailable(date,time){
 
   const tNorm=time.trim().slice(0,5);
   const isBooked=bookings.some(b=>{
+    if(ignoreBookingId && String(b.id)===String(ignoreBookingId))return false;
+    const st=status(b);
+    if(st==='Завершено'||st==='Відхилено'||st==='Скасовано клієнтом')return false;
     const bDate=(b.date||'').trim();
     const bTime=(b.time||'').trim().slice(0,5);
-    const st=status(b);
-    return bDate===date.trim() && bTime===tNorm && (st==='Нова'||st==='Підтверджено');
+    if(bDate===date.trim() && bTime===tNorm)return true;
+    if(st==='Запит на перенесення' && (b.reschedule_date||'').trim()===date.trim() && (b.reschedule_time||'').trim().slice(0,5)===tNorm)return true;
+    return false;
   });
   if(isBooked)return 'Цей час уже зайнятий іншим клієнтом.';
   return '';
@@ -449,12 +462,15 @@ const IGNORED_TEST_IDS=['5e6377e6-276b-431a-8358-caa628ee17b3','9497c1e7-2cfa-4d
 
 function renderBookings(){
   let t=$('[data-bookings]');if(!t)return;
+  reloadBookings();
   // Фільтруємо старі тестові заявки
   bookings=bookings.filter(b=>!IGNORED_TEST_IDS.includes(String(b.id)));
 
-  let active=bookings.filter(b=>status(b)==='Нова'||status(b)==='Підтверджено').length;
+  let active=bookings.filter(b=>status(b)==='Нова'||status(b)==='Підтверджено'||status(b)==='Запит на перенесення').length;
+  let reschedCount=bookings.filter(b=>status(b)==='Запит на перенесення').length;
   let done=bookings.filter(b=>status(b)==='Завершено').length;
-  $$('[data-booking-count]').forEach(x=>x.textContent=active);
+
+  $$('[data-booking-count]').forEach(x=>x.textContent=reschedCount?`${active} (⚠️ ${reschedCount} перенос)`:active);
   const totalEl=$('[data-stat-total]');if(totalEl)totalEl.textContent=bookings.length;
   const doneEl=$('[data-stat-done]');if(doneEl)doneEl.textContent=done;
   const servCount=$('[data-services-count]');if(servCount)servCount.textContent=data.services.length;
@@ -474,10 +490,19 @@ function renderBookings(){
     }else if(st==='Відхилено'){
       badgeClass='status rejected';
       badgeText='❌ Відхилено';
+    }else if(st==='Скасовано клієнтом'){
+      badgeClass='status cancelled';
+      badgeText='🚫 Скасовано клієнтом';
+    }else if(st==='Запит на перенесення'){
+      badgeClass='status reschedule-requested';
+      badgeText='⏳ Запит на перенесення!';
+    }else if(st==='Перенесення відхилено'){
+      badgeClass='status pending';
+      badgeText='💬 Очікує вибору клієнта';
     }
 
     return `
-      <article class="booking-admin-card ${st==='Підтверджено'?'is-confirmed':''} ${st==='Відхилено'?'is-rejected':''}">
+      <article class="booking-admin-card ${st==='Підтверджено'?'is-confirmed':''} ${st==='Відхилено'?'is-rejected':''} ${st==='Запит на перенесення'?'is-reschedule-requested':''} ${st==='Скасовано клієнтом'?'is-cancelled':''}">
         <header>
           <div>
             <strong>${esc(b.name)}</strong> · <span style="color:#256528;font-weight:700;">${esc(b.service)}</span>
@@ -486,6 +511,24 @@ function renderBookings(){
         </header>
         <p>
           📅 <b>${esc(b.date)}</b> об <b>${esc(b.time)}</b> · 📞 <a href="tel:${cleanPhone}" style="color:inherit;font-weight:800;text-decoration:underline;">${esc(b.phone)}</a>
+          ${st==='Запит на перенесення'?`
+            <div style="margin:10px 0; padding:10px 14px; background:#fffbe6; border-left:4px solid #f59e0b; border-radius:8px;">
+              <div style="font-weight:800; color:#b45309; font-size:13px; margin-bottom:4px;">⚠️ Клієнт просить перенести час візиту:</div>
+              <div style="font-size:13px; color:#18361b;">
+                Поточний час: <b>${esc(b.date)} ${esc(b.time)}</b><br />
+                ➡️ <b>Новий бажаний час:</b> <span style="background:#d7ff4a; color:#122915; font-weight:800; padding:2px 8px; border-radius:6px; display:inline-block; margin-top:3px;">${esc(b.reschedule_date)} об ${esc(b.reschedule_time)}</span>
+              </div>
+              ${b.reschedule_reason?`<div style="font-size:12px; color:#6b7280; margin-top:4px;">Причина від клієнта: ${esc(b.reschedule_reason)}</div>`:''}
+            </div>
+          `:''}
+          ${st==='Перенесення відхилено'?`
+            <div style="margin:8px 0; padding:8px 12px; background:#f0f7f1; border-left:4px solid #3ca848; border-radius:6px; font-size:12px;">
+              <b>Ваша пропозиція / коментар клієнту:</b> ${esc(b.reschedule_admin_message)}
+            </div>
+          `:''}
+          ${st==='Скасовано клієнтом'?`
+            <br /><span style="color:#888; font-size:12px; font-style:italic;">Клієнт самостійно скасував цей запис. Час візиту звільнено для інших клієнтів.</span>
+          `:''}
           ${b.note?`<br /><span style="color:#576b5b;font-size:12px;">Примітка: ${esc(b.note)}</span>`:''}
           ${b.reject_reason?`<br /><span style="color:#b82618;font-size:12px;font-weight:600;">Причина відхилення: ${esc(b.reject_reason)}</span>`:''}
         </p>
@@ -498,17 +541,46 @@ function renderBookings(){
             <button type="button" class="admin-accept-btn" data-close-booking="${b.id}">✓ Позначити виконаною</button>
             <button type="button" class="admin-reject-btn" data-reject-booking="${b.id}">Скасувати / Відхилити</button>
           `:''}
+          ${st==='Запит на перенесення'?`
+            <button type="button" class="admin-accept-btn" data-approve-reschedule="${b.id}" style="background:#16a34a;color:#fff;">✅ Підтвердити новий час (${esc(b.reschedule_date)} ${esc(b.reschedule_time)})</button>
+            <button type="button" class="admin-reject-btn" data-propose-reschedule="${b.id}" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;">💬 Запропонувати інший час / Відхилити</button>
+            <button type="button" class="admin-reject-btn" data-reject-booking="${b.id}">❌ Скасувати запис</button>
+          `:''}
+          ${st==='Перенесення відхилено'?`
+            <button type="button" class="admin-accept-btn" data-accept-booking="${b.id}">🟢 Залишити попередній час (${esc(b.date)} ${esc(b.time)})</button>
+            <button type="button" class="admin-reject-btn" data-reject-booking="${b.id}">❌ Скасувати запис</button>
+          `:''}
         </div>
       </article>
     `;
   }).join(''):'<p class="admin-hint" style="text-align:center;padding:28px 0;font-size:14px;">Нових заявок поки немає.</p>';
 
-  // Прийняти заявку
-  $$('[data-accept-booking]').forEach(x=>x.onclick=async ()=>{
-    const targetId=x.dataset.acceptBooking;
+  // Підтвердити перенесення на новий час
+  $$('[data-approve-reschedule]').forEach(x=>x.onclick=async ()=>{
+    const targetId=x.dataset.approveReschedule;
     let b=bookings.find(q=>String(q.id)===String(targetId));
     if(b){
+      const newDate=b.reschedule_date||b.date;
+      const newTime=b.reschedule_time||b.time;
+      const oldDate=b.date;
+      const oldTime=b.time;
+
+      b.date=newDate;
+      b.time=newTime;
       b.status='confirmed';
+      b.note=(b.note||'')
+        .replace(/\[ПЕРЕНЕСЕННЯ:[^\]]*\]/g,'')
+        .replace(/\[ВІДПОВІДЬ_СТО:[^\]]*\]/g,'')
+        .trim();
+      const tag=`[Перенесено майстром з ${oldDate} ${oldTime} на ${newDate} ${newTime}]`;
+      if(!b.note.includes(tag)){
+        b.note=(b.note?b.note+' | ':'')+tag;
+      }
+      b.reschedule_date='';
+      b.reschedule_time='';
+      b.reschedule_reason='';
+      b.reschedule_admin_message='';
+
       saveBookings();
       renderBookings();
       if(window.renderUserBookings&&window.currentUser){
@@ -516,7 +588,78 @@ function renderBookings(){
       }
       refreshTimes();
       try{
-        await sbFetch(`bookings?id=eq.${b.id}`,{method:'PATCH',body:JSON.stringify({status:'confirmed'})});
+        await sbFetch(`bookings?id=eq.${b.id}`,{
+          method:'PATCH',
+          body:JSON.stringify({
+            booking_date:b.date,
+            booking_time:b.time,
+            status:'confirmed',
+            note:b.note
+          })
+        });
+      }catch(e){}
+      alert(`Перенесення підтверджено! Новий час: ${b.date} об ${b.time}. Клієнт побачить оновлений запис у своєму кабінеті.`);
+    }
+  });
+
+  // Запропонувати інший час або надіслати коментар щодо переносу
+  $$('[data-propose-reschedule]').forEach(x=>x.onclick=async ()=>{
+    const targetId=x.dataset.proposeReschedule;
+    let b=bookings.find(q=>String(q.id)===String(targetId));
+    if(b){
+      const proposal=prompt(
+        'Вкажіть причину або запропонуйте клієнту інший вільний час:\n(Наприклад: "На 14:00 зайнято, можемо о 16:00 або завтра об 11:00"):',
+        'На жаль, цей час зайнятий. Будь ласка, оберіть інший вільний час у кабінеті.'
+      );
+      if(proposal===null)return;
+
+      b.status='reschedule_rejected';
+      b.reschedule_admin_message=proposal.trim();
+      b.note=(b.note||'').replace(/\[ВІДПОВІДЬ_СТО:[^\]]*\]/g,'').trim();
+      b.note=(b.note?b.note+' | ':'')+`[ВІДПОВІДЬ_СТО: ${proposal.trim()}]`;
+
+      saveBookings();
+      renderBookings();
+      if(window.renderUserBookings&&window.currentUser){
+        window.renderUserBookings(window.currentUser);
+      }
+      refreshTimes();
+      try{
+        await sbFetch(`bookings?id=eq.${b.id}`,{
+          method:'PATCH',
+          body:JSON.stringify({
+            status:'reschedule_rejected',
+            note:b.note
+          })
+        });
+      }catch(e){}
+      alert('Вашу відповідь надіслано клієнту. Клієнт зможе обрати інший час або залишити поточний.');
+    }
+  });
+
+  // Прийняти заявку
+  $$('[data-accept-booking]').forEach(x=>x.onclick=async ()=>{
+    const targetId=x.dataset.acceptBooking;
+    let b=bookings.find(q=>String(q.id)===String(targetId));
+    if(b){
+      b.status='confirmed';
+      b.reschedule_date='';
+      b.reschedule_time='';
+      b.reschedule_reason='';
+      b.reschedule_admin_message='';
+      b.note=(b.note||'')
+        .replace(/\[ПЕРЕНЕСЕННЯ:[^\]]*\]/g,'')
+        .replace(/\[ВІДПОВІДЬ_СТО:[^\]]*\]/g,'')
+        .trim();
+
+      saveBookings();
+      renderBookings();
+      if(window.renderUserBookings&&window.currentUser){
+        window.renderUserBookings(window.currentUser);
+      }
+      refreshTimes();
+      try{
+        await sbFetch(`bookings?id=eq.${b.id}`,{method:'PATCH',body:JSON.stringify({status:'confirmed',note:b.note})});
       }catch(e){}
     }
   });
@@ -526,10 +669,12 @@ function renderBookings(){
     const targetId=x.dataset.rejectBooking;
     let b=bookings.find(q=>String(q.id)===String(targetId));
     if(b){
-      const reason=prompt('Вкажіть причину відхилення для клієнта (необов’язково):', 'На жаль, на цей час немає вільних підйомників. Оберіть інший час.');
+      const reason=prompt('Вкажіть причину відхилення / скасування для клієнта (необов’язково):', 'На жаль, на цей час немає вільних підйомників. Оберіть інший час.');
       if(reason===null)return; // Скасовано адміном
       b.status='rejected';
       b.reject_reason=reason.trim();
+      b.note=(b.note||'').replace(/\[ПЕРЕНЕСЕННЯ:[^\]]*\]/g,'').trim();
+      b.note=(b.note?b.note+' | ':'')+'Відхилено: '+reason.trim();
       saveBookings();
       renderBookings();
       if(window.renderUserBookings&&window.currentUser){
@@ -537,7 +682,7 @@ function renderBookings(){
       }
       refreshTimes();
       try{
-        await sbFetch(`bookings?id=eq.${b.id}`,{method:'PATCH',body:JSON.stringify({status:'rejected',note:(b.note?b.note+' | ':'')+'Відхилено: '+reason.trim()})});
+        await sbFetch(`bookings?id=eq.${b.id}`,{method:'PATCH',body:JSON.stringify({status:'rejected',note:b.note})});
       }catch(e){}
     }
   });
@@ -566,17 +711,35 @@ async function syncWithCloud(){
   if(cloudBookings&&Array.isArray(cloudBookings)){
     bookings=cloudBookings
       .filter(b=>!IGNORED_TEST_IDS.includes(String(b.id))&&b.status!=='deleted')
-      .map(b=>({
-        id:b.id,
-        name:b.name,
-        phone:b.phone,
-        service:b.service_name,
-        date:b.booking_date,
-        time:b.booking_time,
-        note:b.note,
-        status:b.status==='completed'||b.status==='closed'?'closed':b.status==='confirmed'||b.status==='accepted'?'confirmed':b.status==='rejected'?'rejected':'new',
-        reject_reason:(b.note&&b.note.includes('Відхилено: '))?b.note.split('Відхилено: ')[1]:''
-      }));
+      .map(b=>{
+        const noteStr=b.note||'';
+        const reschedMatch=noteStr.match(/\[ПЕРЕНЕСЕННЯ:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})(?:\s*\|\s*Причина:\s*([^\]]+))?\]/);
+        const adminMsgMatch=noteStr.match(/\[ВІДПОВІДЬ_СТО:\s*([^\]]+)\]/);
+
+        let finalStatus='new';
+        if(b.status==='completed'||b.status==='closed')finalStatus='closed';
+        else if(b.status==='confirmed'||b.status==='accepted')finalStatus='confirmed';
+        else if(b.status==='rejected')finalStatus='rejected';
+        else if(b.status==='cancelled')finalStatus='cancelled';
+        else if(b.status==='reschedule_requested'||(reschedMatch&&b.status!=='confirmed'))finalStatus='reschedule_requested';
+        else if(b.status==='reschedule_rejected')finalStatus='reschedule_rejected';
+
+        return {
+          id:b.id,
+          name:b.name,
+          phone:b.phone,
+          service:b.service_name||b.service,
+          date:b.booking_date,
+          time:b.booking_time,
+          note:b.note,
+          status:finalStatus,
+          reschedule_date:reschedMatch?reschedMatch[1]:'',
+          reschedule_time:reschedMatch?reschedMatch[2]:'',
+          reschedule_reason:reschedMatch&&reschedMatch[3]?reschedMatch[3].trim():'',
+          reschedule_admin_message:adminMsgMatch?adminMsgMatch[1].trim():'',
+          reject_reason:(b.note&&b.note.includes('Відхилено: '))?b.note.split('Відхилено: ')[1]:''
+        };
+      });
     saveBookings();
     renderBookings();
     refreshTimes();
@@ -812,6 +975,13 @@ $$('[data-logout-admin]').forEach(btn=>{
     if(typeof resetToAuth==='function')resetToAuth();
   };
 });
+
+window.renderBookings=renderBookings;
+window.reloadBookings=reloadBookings;
+window.refreshTimes=refreshTimes;
+window.unavailable=unavailable;
+window.status=status;
+window.sbFetch=sbFetch;
 
 render();
 syncWithCloud();

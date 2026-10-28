@@ -1185,6 +1185,43 @@ body.is-admin-session [data-new-booking-btn] {
 .user-booking-card.is-rejected {
   border-left: 4px solid #b82618;
 }
+.status.reschedule-requested, .booking-badge.reschedule-requested {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+.status.cancelled, .booking-badge.cancelled {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+.booking-admin-card.is-reschedule-requested {
+  border-left: 4px solid #f59e0b;
+  background: #fffdf7;
+}
+.booking-admin-card.is-cancelled {
+  border-left: 4px solid #9ca3af;
+  opacity: 0.8;
+}
+.user-booking-card.is-cancelled {
+  border-left: 4px solid #9ca3af;
+  opacity: 0.8;
+  background: #f9fafb;
+}
+.user-booking-card.is-resched {
+  border-left: 4px solid #f59e0b;
+  background: #fffdf7;
+}
+.user-btn-action {
+  transition: all 0.2s ease;
+}
+.user-btn-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.user-btn-action:active {
+  transform: translateY(0);
+}
 
 /* ВБУДОВАНИЙ КАБІНЕТ КЛІЄНТА НА ГОЛОВНІЙ СТОРІНЦІ */
 .header {
