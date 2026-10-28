@@ -149,6 +149,7 @@ async function syncWithCloud(){
     if(s.telegram!==undefined)data.telegram=s.telegram;
     if(s.closed_dates)data.closedDates=Array.isArray(s.closed_dates)?s.closed_dates.join('; '):s.closed_dates;
     if(s.closed_slots)data.closedSlots=Array.isArray(s.closed_slots)?s.closed_slots.join('; '):s.closed_slots;
+    if(s.services&&Array.isArray(s.services)&&s.services.length)data.services=s.services;
     save();
     render();
   }
@@ -264,7 +265,8 @@ $('#adminForm').onsubmit=async e=>{
       viber:data.viber,
       telegram:data.telegram,
       closed_dates:split(data.closedDates),
-      closed_slots:split(data.closedSlots)
+      closed_slots:split(data.closedSlots),
+      services:data.services
     })
   });
 };
