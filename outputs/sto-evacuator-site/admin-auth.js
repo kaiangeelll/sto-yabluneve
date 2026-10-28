@@ -75,7 +75,7 @@
     if(guestView)guestView.hidden=true;
     if(userView)userView.hidden=false;
 
-    const name=user.name||user.user_metadata?.full_name||user.user_metadata?.name||user.email||user.phone||'Клієнт';
+    const name=user.name||user.user_metadata?.full_name||user.user_metadata?.name||'Клієнт';
     const email=user.email||'';
     const phone=user.phone||'';
     const avatar=user.user_metadata?.avatar_url||user.user_metadata?.picture;
@@ -101,7 +101,8 @@
       avatarEl.hidden=false;
       if(initialsEl)initialsEl.hidden=true;
     }else if(initialsEl){
-      initialsEl.textContent=(name[0]||'К').toUpperCase();
+      const cleanLetters=(name||'').replace(/[^a-zA-Zа-яА-ЯіІїЇєЄґҐ]/g,'');
+      initialsEl.textContent=(cleanLetters[0]||'К').toUpperCase();
       initialsEl.hidden=false;
       if(avatarEl)avatarEl.hidden=true;
     }
@@ -166,14 +167,18 @@
       e.preventDefault();
       if(!window.currentUser)return;
       const f=editForm.elements;
-      window.currentUser.name=f.name.value.trim();
-      window.currentUser.phone=f.phone.value.trim();
-      window.currentUser.email=f.email.value.trim();
+      const newName=f.name.value.trim()||'Клієнт';
+      const newPhone=f.phone.value.trim();
+      const newEmail=f.email.value.trim();
+
+      window.currentUser.name=newName;
+      window.currentUser.phone=newPhone;
+      window.currentUser.email=newEmail;
 
       localStorage.setItem('stoUserSession',JSON.stringify(window.currentUser));
 
       let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
-      const idx=users.findIndex(u=>u.phone===window.currentUser.phone||u.email===window.currentUser.email);
+      const idx=users.findIndex(u=>(u.phone&&u.phone===newPhone)||(u.email&&u.email===newEmail));
       if(idx>=0){
         users[idx]={...users[idx],...window.currentUser};
       }else{
@@ -181,12 +186,20 @@
       }
       localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
 
+      // Миттєво оновлюємо ім'я, аватарку і пошту в шапці
       showProfile(window.currentUser);
+
       const msg=dialog.querySelector('[data-save-msg]');
       if(msg){
+        msg.textContent='✅ Контакти успішно збережено!';
         msg.hidden=false;
-        setTimeout(()=>{msg.hidden=true;},2500);
       }
+
+      setTimeout(()=>{
+        const bookTabBtn=dialog.querySelector('[data-profile-tab="bookings"]');
+        if(bookTabBtn)bookTabBtn.click();
+        if(msg)msg.hidden=true;
+      },800);
     };
   }
 
@@ -293,7 +306,8 @@
 
       // Якщо новий логін з паролем
       if(login&&password.length>=4){
-        const newUser={name:login.split('@')[0],phone:login.includes('@')?'':login,email:login.includes('@')?login:'',password:password,role:'customer'};
+        const isEmail=login.includes('@');
+        const newUser={name:isEmail?login.split('@')[0]:'Клієнт',phone:isEmail?'':login,email:isEmail?login:'',password:password,role:'customer'};
         users.push(newUser);
         localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
         localStorage.setItem('stoUserSession',JSON.stringify(newUser));
