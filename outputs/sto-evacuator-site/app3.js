@@ -836,6 +836,10 @@ $('#bookingForm').onsubmit=async e=>{
       bService=f.get('service'),
       bNote=f.get('note');
 
+  if(!bEmail && window.currentUser && window.currentUser.email){
+    bEmail=String(window.currentUser.email).trim();
+  }
+
   const phoneDigits=bPhone.replace(/\D/g,'');
   if(phoneDigits.length<10){
     alert('Будь ласка, вкажіть коректний номер телефону (наприклад: +380 68 067 9909)');
