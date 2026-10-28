@@ -440,6 +440,17 @@
     });
   }
 
+  function switchProfileTab(tabName='bookings'){
+    if(!dialog)return;
+    dialog.querySelectorAll('[data-profile-tab]').forEach(b=>{
+      b.classList.toggle('active',b.dataset.profileTab===tabName);
+    });
+    dialog.querySelectorAll('[data-profile-panel]').forEach(p=>{
+      p.hidden=p.dataset.profilePanel!==tabName;
+    });
+  }
+  window.switchProfileTab=switchProfileTab;
+
   function showProfile(user){
     window.currentUser=user;
     try{
@@ -509,9 +520,17 @@
       document.body.classList.toggle('is-admin-session',isAdmin);
       if(adminBox)adminBox.hidden=!isAdmin;
       if(userTabs)userTabs.hidden=isAdmin;
-      dialog.querySelectorAll('[data-profile-panel]').forEach(p=>{
-        p.hidden=isAdmin;
-      });
+
+      if(isAdmin){
+        dialog.querySelectorAll('[data-profile-panel]').forEach(p=>{
+          p.hidden=true;
+        });
+      }else{
+        // Чітко розділяємо: у вкладці «Мої записи» показуються тільки записи, а форма контактів прихована
+        const currentActive=dialog.querySelector('[data-profile-tab].active');
+        const activeTabId=(currentActive&&currentActive.dataset.profileTab)?currentActive.dataset.profileTab:'bookings';
+        switchProfileTab(activeTabId);
+      }
 
       if(editForm){
         editForm.elements.name.value=user.name||'';
@@ -662,11 +681,7 @@
   // Profile tabs (Bookings vs Edit)
   dialog.querySelectorAll('[data-profile-tab]').forEach(btn=>{
     btn.onclick=()=>{
-      dialog.querySelectorAll('[data-profile-tab]').forEach(b=>b.classList.toggle('active',b===btn));
-      const target=btn.dataset.profileTab;
-      dialog.querySelectorAll('[data-profile-panel]').forEach(p=>{
-        p.hidden=p.dataset.profilePanel!==target;
-      });
+      switchProfileTab(btn.dataset.profileTab);
     };
   });
 

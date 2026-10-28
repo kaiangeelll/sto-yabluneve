@@ -260,6 +260,9 @@ function open(id,service=''){
     if(!u&&window.currentUser)u=window.currentUser;
     if(u&&window.showUserProfile){
       window.showUserProfile(u);
+      if(window.switchProfileTab){
+        window.switchProfileTab('bookings');
+      }
     }else{
       const uv=$('#accountUserView');if(uv)uv.hidden=true;
       const gv=$('#accountGuestView');if(gv)gv.hidden=false;
@@ -771,7 +774,13 @@ async function syncWithCloud(){
 }
 
 $$('[data-open-booking]').forEach(x=>x.onclick=()=>open('bookingDialog'));
-$$('[data-open-account]').forEach(x=>x.onclick=()=>open('accountDialog'));
+$$('[data-open-account]').forEach(x=>x.onclick=()=>{
+  const targetTab=x.dataset.profileTarget||'bookings';
+  open('accountDialog');
+  if(window.switchProfileTab){
+    window.switchProfileTab(targetTab);
+  }
+});
 $$('[data-open-review]').forEach(x=>x.onclick=()=>open('reviewDialog'));
 $$('[data-open-admin]').forEach(x=>x.onclick=()=>{fillAdmin();open('adminDialog')});
 $$('[data-close]').forEach(x=>x.onclick=closeAll);
