@@ -266,44 +266,63 @@
     };
   }
 
-  // Google Login / OAuth
+  // Офіційний вхід через Google OAuth з куками та сесією
   document.querySelectorAll('[data-google-login]').forEach(btn=>{
     btn.onclick=async ()=>{
-      // Запобігаємо показу 400 помилки Supabase ("Unsupported provider")
-      // Надаємо можливість швидкого входу через Google профіль для користувача або тест:
-      let enteredEmail=prompt('Швидкий вхід через Google:\nВведіть ваш Gmail або натисніть "ОК" для тестового Google-профілю:', 'client.google@gmail.com');
-      if(enteredEmail===null)return;
-      enteredEmail=enteredEmail.trim().toLowerCase()||'client.google@gmail.com';
-
-      const namePart=enteredEmail.split('@')[0].replace(/[._-]/g,' ');
-      const formattedName=namePart.charAt(0).toUpperCase()+namePart.slice(1);
-
-      const googleUser={
-        name:formattedName||'Клієнт Google',
-        email:enteredEmail,
-        phone:'',
-        role:'customer',
-        provider:'google',
-        user_metadata:{
-          full_name:formattedName||'Клієнт Google',
-          avatar_url:`https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(enteredEmail)}`
-        }
-      };
-
-      localStorage.setItem('stoUserSession',JSON.stringify(googleUser));
-
-      let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
-      const existIdx=users.findIndex(u=>u.email&&u.email.toLowerCase()===enteredEmail);
-      if(existIdx>=0){
-        users[existIdx]={...users[existIdx],...googleUser};
-      }else{
-        users.push(googleUser);
+      if(!sb){
+        alert('Сервіс авторизації завантажується, спробуйте ще раз...');
+        return;
       }
-      localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
-
-      showProfile(googleUser);
+      btn.disabled=true;
+      btn.textContent='Перенаправлення на Google...';
+      try{
+        const {error}=await sb.auth.signInWithOAuth({
+          provider:'google',
+          options:{
+            redirectTo:window.location.origin+window.location.pathname
+          }
+        });
+        if(error){
+          alert('Увага: у панелі Supabase вимкнено провайдер Google!\nПерейдіть у Supabase -> Auth -> Providers -> Google та увімкніть його (Enable).');
+          btn.disabled=false;
+          btn.innerHTML='Увійти через Google';
+        }
+      }catch(err){
+        alert('Помилка підключення до Google: '+err.message);
+        btn.disabled=false;
+        btn.innerHTML='Увійти через Google';
+      }
     };
   });
+
+  // Автоматичне підхоплення Google сесії при поверненні з accounts.google.com
+  if(sb){
+    sb.auth.onAuthStateChange((event,session)=>{
+      if(session?.user){
+        const meta=session.user.user_metadata||{};
+        const googleUser={
+          name:meta.full_name||meta.name||(session.user.email?session.user.email.split('@')[0]:'Клієнт Google'),
+          email:session.user.email||'',
+          phone:session.user.phone||'',
+          role:'customer',
+          provider:'google',
+          user_metadata:meta
+        };
+        localStorage.setItem('stoUserSession',JSON.stringify(googleUser));
+
+        let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
+        const existIdx=users.findIndex(u=>u.email&&u.email.toLowerCase()===googleUser.email.toLowerCase());
+        if(existIdx>=0){
+          users[existIdx]={...users[existIdx],...googleUser};
+        }else{
+          users.push(googleUser);
+        }
+        localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
+
+        showProfile(googleUser);
+      }
+    });
+  }
 
   // Logout
   const logoutBtn=dialog?dialog.querySelector('[data-logout]'):null;
