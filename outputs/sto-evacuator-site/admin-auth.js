@@ -19,6 +19,8 @@
 
   function showProfile(user){
     if(!dialog||!userBox)return;
+    const oldSuccess=dialog.querySelector('.account-success');
+    if(oldSuccess)oldSuccess.hidden=true;
     if(tabs)tabs.hidden=true;
     panels.forEach(p=>p.hidden=true);
     userBox.hidden=false;
@@ -58,12 +60,20 @@
     const isAdmin=user.role==='admin'||user.is_admin===true;
     adminButtons.forEach(b=>b.hidden=!isAdmin);
     if(descEl){
-      descEl.textContent=isAdmin?'Ви увійшли як Адміністратор сервісу. Доступне повне керування сайтом.':'Ви авторизовані як клієнт. Ваші авто та записи збережено.';
+      descEl.textContent=isAdmin?'Ви увійшли як Адміністратор сервісу. Доступне повне керування сайтом.':'Ви увійшли в особистий кабінет. Ваші дані підставляються автоматично під час запису.';
     }
+
+    // Оновлюємо кнопки кабінету в шапці сайту
+    const firstName=name.split(' ')[0]||'Клієнт';
+    document.querySelectorAll('[data-open-account]').forEach(btn=>{
+      btn.textContent=isAdmin?'Панель керування':`Кабінет (${firstName})`;
+    });
   }
 
   function resetToAuth(){
     if(!dialog)return;
+    const oldSuccess=dialog.querySelector('.account-success');
+    if(oldSuccess)oldSuccess.hidden=true;
     if(userBox)userBox.hidden=true;
     if(tabs)tabs.hidden=false;
     panels.forEach(p=>{
@@ -75,6 +85,10 @@
     adminButtons.forEach(b=>b.hidden=true);
     if(loginError)loginError.hidden=true;
     if(regError)regError.hidden=true;
+
+    document.querySelectorAll('[data-open-account]').forEach(btn=>{
+      btn.textContent='Кабінет';
+    });
   }
 
   // Google OAuth

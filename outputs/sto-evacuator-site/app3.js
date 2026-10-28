@@ -218,14 +218,7 @@ $$('[data-tab]').forEach(x=>x.onclick=()=>{
   $$('[data-panel]').forEach(y=>y.hidden=y.dataset.panel!==x.dataset.tab);
 });
 
-function accountDone(e){
-  e.preventDefault();
-  $$('[data-panel]').forEach(x=>x.hidden=true);
-  $('.account-tabs').hidden=true;
-  $('.account-success').hidden=false;
-}
-$('#loginForm').onsubmit=accountDone;
-$('#registerForm').onsubmit=accountDone;
+
 
 $$('[data-admin-tab]').forEach(x=>x.onclick=()=>{
   $$('[data-admin-tab]').forEach(y=>y.classList.toggle('active',y===x));
