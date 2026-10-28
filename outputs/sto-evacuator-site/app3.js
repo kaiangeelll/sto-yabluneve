@@ -43,12 +43,27 @@ function linkFor(kind,digits){
   let v=data[kind]?.trim();
   if(!v)return '';
   if(kind==='telegram'){
-    let u=v.replace(/^https?:\/\/t\.me\//i,'').replace(/^@/,'').trim();
-    return `https://t.me/${u}`;
+    if(/^https?:|^tg:/i.test(v))return v;
+    let clean=v.replace(/^https?:\/\/t\.me\//i,'').replace(/^t\.me\//i,'').replace(/^@/,'').trim();
+    if(/^\+?\d+$/.test(clean)){
+      return `https://t.me/+${clean.replace(/\D/g,'')}`;
+    }
+    return `https://t.me/${clean}`;
   }
-  if(/^https?:|^viber:/.test(v))return v;
-  if(kind==='whatsapp')return `https://wa.me/${v.replace(/\D/g,'')}`;
-  if(kind==='viber')return `viber://chat?number=%2B${v.replace(/\D/g,'')}`;
+  if(kind==='whatsapp'){
+    if(/^https?:/i.test(v))return v;
+    let d=v.replace(/\D/g,'');
+    if(d.startsWith('0')&&d.length===10)d='38'+d;
+    else if(d.startsWith('80')&&d.length===11)d='3'+d;
+    return `https://wa.me/${d}`;
+  }
+  if(kind==='viber'){
+    if(/^https?:|^viber:/i.test(v))return v;
+    let d=v.replace(/\D/g,'');
+    if(d.startsWith('0')&&d.length===10)d='38'+d;
+    else if(d.startsWith('80')&&d.length===11)d='3'+d;
+    return `viber://chat?number=%2B${d}`;
+  }
   return v;
 }
 
@@ -139,6 +154,10 @@ function render(){
   $$('[data-hours]').forEach(e=>e.textContent=data.hours);
   $$('[data-map]').forEach(e=>e.href=data.map);
   [['whatsapp','WhatsApp'],['viber','Viber'],['telegram','Telegram']].forEach(([k])=>$$(`[data-${k}]`).forEach(e=>{let l=linkFor(k,digits);e.hidden=!l;if(l)e.href=l}));
+  $$('[data-messengers-group]').forEach(group=>{
+    const hasVisible=Array.from(group.querySelectorAll('[data-whatsapp],[data-viber],[data-telegram]')).some(el=>!el.hidden);
+    group.hidden=!hasVisible;
+  });
   $('[data-services]').innerHTML=data.services.map((s,i)=>`<article class="service" tabindex="0" role="button" data-service="${i}"><span class="service-num">${String(i+1).padStart(2,'0')}</span><h3>${esc(s[0])}</h3><p>${esc(s[1])}</p><span class="price">${esc(s[2])}</span></article>`).join('');
   $('[data-service-options]').innerHTML='<option value="">Оберіть послугу</option>'+data.services.map(s=>`<option>${esc(s[0])}</option>`).join('');
   $$('[data-service]').forEach(el=>{let act=()=>open('bookingDialog',data.services[+el.dataset.service][0]);el.onclick=act;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')act()}});
