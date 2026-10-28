@@ -33,7 +33,14 @@ function linkFor(kind,digits){
 }
 
 function render(){
-  let digits=data.phone.replace(/\D/g,'');document.title=`${data.name} — ремонт авто в Новому`;
+  let digits=data.phone.replace(/\D/g,'');
+  document.title=`${data.name} — ремонт авто в Новому`;
+  $$('[data-brand-name]').forEach(e=>{
+    const sub=e.querySelector('small');
+    const clean=data.name.replace(/^СТО\s*/i,'').trim()||data.name;
+    e.textContent=clean;
+    if(sub)e.appendChild(sub);
+  });
   $$('[data-phone]').forEach(e=>{e.textContent=data.phone;e.href='tel:'+digits});
   $$('[data-address]').forEach(e=>e.innerHTML=esc(data.address).replace(', ', ',<br />'));
   $$('[data-hours]').forEach(e=>e.textContent=data.hours);
@@ -103,7 +110,7 @@ function open(id,service=''){
 }
 function closeAll(){$$('dialog[open]').forEach(x=>x.close())}
 
-function row(s=['Нова послуга','Опис послуги','від 500 ₴']){return `<div class="admin-service"><input data-k="0" value="${esc(s[0])}"><input data-k="2" value="${esc(s[2])}"><button type="button" class="remove-service">×</button></div>`}
+function row(s=['Нова послуга','Опис послуги уточнює майстер','від 500 ₴']){return `<div class="admin-service"><input data-k="0" value="${esc(s[0])}" placeholder="Назва послуги"><input data-k="1" type="hidden" value="${esc(s[1]||'Якісний ремонт та обслуговування')}"><input data-k="2" value="${esc(s[2])}" placeholder="Ціна"><button type="button" class="remove-service">×</button></div>`}
 function bindRemove(){$$('.remove-service').forEach(x=>x.onclick=()=>x.closest('.admin-service').remove())}
 
 let adminCalDate=new Date();
@@ -188,6 +195,7 @@ function renderAdminDayDetails(){
       renderAdminCal();
       renderAdminDayDetails();
       refreshTimes();
+      syncAdminCalendarToCloud();
     };
   }
 
@@ -217,6 +225,7 @@ function renderAdminDayDetails(){
         renderAdminCal();
         renderAdminDayDetails();
         refreshTimes();
+        syncAdminCalendarToCloud();
       };
     });
   }
@@ -295,6 +304,9 @@ async function syncWithCloud(){
     if(s.services&&Array.isArray(s.services)&&s.services.length)data.services=s.services;
     save();
     render();
+    if($('#adminDialog')?.open && typeof fillAdmin==='function'){
+      fillAdmin();
+    }
   }
 }
 
@@ -386,36 +398,80 @@ $('[data-add-service]').onclick=()=>{
   bindRemove();
 };
 
+async function syncAdminCalendarToCloud(){
+  try{
+    await sbFetch('site_settings?id=eq.1',{
+      method:'PATCH',
+      body:JSON.stringify({
+        closed_dates:split(data.closedDates),
+        closed_slots:split(data.closedSlots)
+      })
+    });
+  }catch(e){}
+}
+
 $('#adminForm').onsubmit=async e=>{
   e.preventDefault();
+  const submitBtn=$('#adminForm button:not([type=button])');
+  const originalText=submitBtn?submitBtn.textContent:'';
+  if(submitBtn){
+    submitBtn.disabled=true;
+    submitBtn.textContent='Збереження в базі даних...';
+  }
+
   let f=e.target;
   ['name','adminEmail','phone','address','hours','map','whatsapp','viber','telegram','closedDates','closedSlots'].forEach(k=>f.elements[k]?data[k]=f.elements[k].value:null);
-  data.services=$$('[data-admin-services] .admin-service').map(r=>[r.querySelector('[data-k="0"]').value,'Опис послуги уточнює майстер',r.querySelector('[data-k="2"]').value]).filter(s=>s[0].trim());
+  data.services=$$('[data-admin-services] .admin-service').map(r=>[
+    r.querySelector('[data-k="0"]').value.trim(),
+    (r.querySelector('[data-k="1"]')?.value || 'Якісний ремонт та обслуговування').trim(),
+    r.querySelector('[data-k="2"]').value.trim()
+  ]).filter(s=>s[0]);
+
   save();
   render();
-  closeAll();
 
-  await sbFetch('site_settings?id=eq.1',{
-    method:'PATCH',
-    body:JSON.stringify({
-      site_name:data.name,
-      admin_email:data.adminEmail||'',
-      phone:data.phone,
-      address:data.address,
-      hours:data.hours,
-      map_url:data.map,
-      whatsapp:data.whatsapp,
-      viber:data.viber,
-      telegram:data.telegram,
-      closed_dates:split(data.closedDates),
-      closed_slots:split(data.closedSlots),
-      services:data.services
-    })
-  });
+  try{
+    await sbFetch('site_settings?id=eq.1',{
+      method:'PATCH',
+      body:JSON.stringify({
+        site_name:data.name,
+        admin_email:data.adminEmail||'',
+        phone:data.phone,
+        address:data.address,
+        hours:data.hours,
+        map_url:data.map,
+        whatsapp:data.whatsapp,
+        viber:data.viber,
+        telegram:data.telegram,
+        closed_dates:split(data.closedDates),
+        closed_slots:split(data.closedSlots),
+        services:data.services
+      })
+    });
+    if(submitBtn){
+      submitBtn.textContent='✅ Збережено на сайті!';
+      setTimeout(()=>{
+        submitBtn.disabled=false;
+        submitBtn.textContent=originalText;
+        closeAll();
+      },600);
+    }else{
+      closeAll();
+    }
+  }catch(err){
+    if(submitBtn){
+      submitBtn.disabled=false;
+      submitBtn.textContent=originalText;
+    }
+    closeAll();
+  }
 };
 
 render();
 syncWithCloud();
+
+window.addEventListener('focus', syncWithCloud);
+setInterval(syncWithCloud, 20000);
 
 const prevCalBtn=$('[data-admin-cal-prev]');
 if(prevCalBtn)prevCalBtn.onclick=()=>{adminCalDate.setMonth(adminCalDate.getMonth()-1);renderAdminCal();};
