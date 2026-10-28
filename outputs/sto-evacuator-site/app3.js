@@ -240,6 +240,7 @@ function open(id,service=''){
   if(id==='accountDialog'){
     let u=null;
     try{u=JSON.parse(localStorage.getItem('stoUserSession')||'null');}catch(e){}
+    if(!u&&window.currentUser)u=window.currentUser;
     if(u&&window.showUserProfile){
       window.showUserProfile(u);
     }else{

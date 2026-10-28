@@ -4,7 +4,13 @@
 
   let sb=null;
   if(window.supabase&&window.supabase.createClient){
-    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+      auth:{
+        persistSession:true,
+        autoRefreshToken:true,
+        detectSessionInUrl:true
+      }
+    });
   }
 
   const dialog=document.querySelector('#accountDialog'),
@@ -98,6 +104,9 @@
   function showProfile(user){
     if(!dialog)return;
     window.currentUser=user;
+    try{
+      localStorage.setItem('stoUserSession',JSON.stringify(user));
+    }catch(e){}
 
     if(guestView)guestView.hidden=true;
     if(userView)userView.hidden=false;
@@ -295,31 +304,48 @@
     };
   });
 
+  function saveAndActivateUser(user,shouldOpenCabinet=false){
+    if(!user)return;
+    const meta=user.user_metadata||{};
+    const formattedUser={
+      name:meta.full_name||meta.name||user.name||(user.email?user.email.split('@')[0]:'Клієнт Google'),
+      email:user.email||'',
+      phone:user.phone||'',
+      role:'customer',
+      provider:'google',
+      user_metadata:meta
+    };
+
+    localStorage.setItem('stoUserSession',JSON.stringify(formattedUser));
+    window.currentUser=formattedUser;
+
+    let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
+    const existIdx=users.findIndex(u=>u.email&&u.email.toLowerCase()===formattedUser.email.toLowerCase());
+    if(existIdx>=0){
+      users[existIdx]={...users[existIdx],...formattedUser};
+    }else{
+      users.push(formattedUser);
+    }
+    localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
+
+    showProfile(formattedUser);
+
+    if(shouldOpenCabinet){
+      try{
+        window.history.replaceState({},document.title,window.location.pathname);
+      }catch(e){}
+      setTimeout(()=>{
+        if(typeof open==='function')open('accountDialog');
+      },300);
+    }
+  }
+
   // Автоматичне підхоплення Google сесії при поверненні з accounts.google.com
   if(sb){
     sb.auth.onAuthStateChange((event,session)=>{
       if(session?.user){
-        const meta=session.user.user_metadata||{};
-        const googleUser={
-          name:meta.full_name||meta.name||(session.user.email?session.user.email.split('@')[0]:'Клієнт Google'),
-          email:session.user.email||'',
-          phone:session.user.phone||'',
-          role:'customer',
-          provider:'google',
-          user_metadata:meta
-        };
-        localStorage.setItem('stoUserSession',JSON.stringify(googleUser));
-
-        let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
-        const existIdx=users.findIndex(u=>u.email&&u.email.toLowerCase()===googleUser.email.toLowerCase());
-        if(existIdx>=0){
-          users[existIdx]={...users[existIdx],...googleUser};
-        }else{
-          users.push(googleUser);
-        }
-        localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
-
-        showProfile(googleUser);
+        const isOAuth=window.location.hash.includes('access_token')||window.location.search.includes('code=');
+        saveAndActivateUser(session.user,isOAuth||event==='SIGNED_IN');
       }
     });
   }
@@ -336,18 +362,42 @@
 
   // Check existing session
   async function checkSession(){
+    const hash=window.location.hash||'';
+    const search=window.location.search||'';
+    const hasOAuthParams=hash.includes('access_token')||hash.includes('refresh_token')||search.includes('code=');
+
+    // 1. Читаємо збережену сесію з localStorage
     const local=localStorage.getItem('stoUserSession');
     if(local){
       try{
-        showProfile(JSON.parse(local));
-        return;
+        const u=JSON.parse(local);
+        showProfile(u);
       }catch(e){}
     }
+
+    // 2. Якщо це редірект PKCE з кодом ?code=
+    if(sb&&search.includes('code=')){
+      try{
+        const params=new URLSearchParams(search);
+        const code=params.get('code');
+        if(code){
+          const {data,error}=await sb.auth.exchangeCodeForSession(code);
+          if(data?.session?.user){
+            saveAndActivateUser(data.session.user,true);
+            return;
+          }
+        }
+      }catch(err){
+        console.warn('PKCE exchange:',err);
+      }
+    }
+
+    // 3. Перевіряємо сесію Supabase (у т.ч. токени з hash)
     if(sb){
       try{
         const {data:{session}}=await sb.auth.getSession();
         if(session?.user){
-          showProfile(session.user);
+          saveAndActivateUser(session.user,hasOAuthParams);
           return;
         }
       }catch(e){}
