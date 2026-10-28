@@ -591,15 +591,20 @@
    WIDESCREEN ADMIN DASHBOARD (CLEAN MODERN TABS & CARDS)
    ============================================================ */
 dialog.admin-dashboard-dialog {
+  position: fixed !important;
+  inset: 0 !important;
+  margin: auto !important;
   width: min(1040px, calc(100% - 24px)) !important;
   max-width: 1060px !important;
   max-height: 90vh !important;
+  max-height: 90dvh !important;
   padding: 24px 28px !important;
   border-radius: 26px !important;
   background: #fbfdfa !important;
   border: 1.5px solid #d4e5d3 !important;
   box-shadow: 0 25px 80px rgba(10, 25, 12, 0.3) !important;
   overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
   box-sizing: border-box !important;
 }
 

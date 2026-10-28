@@ -230,7 +230,10 @@ function refreshTimes(){
   }
 }
 
+let savedPageScrollY = 0;
+
 function open(id,service=''){
+  savedPageScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
   let d=$('#'+id);
   if(id==='bookingDialog'){
     let u=null;
@@ -279,8 +282,24 @@ function open(id,service=''){
     $$('[data-admin-panel]').forEach(y=>y.hidden=y.dataset.adminPanel!=='bookings');
   }
   d.showModal();
+  d.scrollTop = 0;
+
+  // Захист для мобільних пристроїв: гарантуємо збереження поточної позиції сторінки
+  const restoreScroll = () => {
+    if (typeof savedPageScrollY === 'number' && Math.abs((window.scrollY || 0) - savedPageScrollY) > 2) {
+      window.scrollTo(0, savedPageScrollY);
+    }
+  };
+  restoreScroll();
+  requestAnimationFrame(restoreScroll);
+  setTimeout(restoreScroll, 60);
 }
-function closeAll(){$$('dialog[open]').forEach(x=>x.close())}
+function closeAll(){
+  $$('dialog[open]').forEach(x=>x.close());
+  if (typeof savedPageScrollY === 'number' && Math.abs((window.scrollY || 0) - savedPageScrollY) > 2) {
+    window.scrollTo(0, savedPageScrollY);
+  }
+}
 
 function row(s=['Нова послуга','Опис послуги уточнює майстер','від 500 ₴']){return `<div class="admin-service"><input data-k="0" value="${esc(s[0])}" placeholder="Назва послуги"><input data-k="1" type="hidden" value="${esc(s[1]||'Якісний ремонт та обслуговування')}"><input data-k="2" value="${esc(s[2])}" placeholder="Ціна"><button type="button" class="remove-service">×</button></div>`}
 function bindRemove(){$$('.remove-service').forEach(x=>x.onclick=()=>x.closest('.admin-service').remove())}
@@ -796,6 +815,20 @@ $$('[data-open-account]').forEach(x=>x.onclick=()=>{
 $$('[data-open-review]').forEach(x=>x.onclick=()=>open('reviewDialog'));
 $$('[data-open-admin]').forEach(x=>x.onclick=()=>{fillAdmin();open('adminDialog')});
 $$('[data-close]').forEach(x=>x.onclick=closeAll);
+$$('dialog').forEach(d=>{
+  d.addEventListener('click',e=>{
+    const rect=d.getBoundingClientRect();
+    const isInDialog=(rect.top<=e.clientY&&e.clientY<=rect.top+rect.height&&rect.left<=e.clientX&&e.clientX<=rect.left+rect.width);
+    if(!isInDialog){
+      d.close();
+    }
+  });
+  d.addEventListener('close',()=>{
+    if(typeof savedPageScrollY==='number'&&Math.abs((window.scrollY||0)-savedPageScrollY)>2){
+      window.scrollTo(0,savedPageScrollY);
+    }
+  });
+});
 $('#year').textContent=new Date().getFullYear();
 $('#bookingForm [name=date]').min=new Date().toISOString().slice(0,10);
 $('#bookingForm [name=date]').onchange=refreshTimes;

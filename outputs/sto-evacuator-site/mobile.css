@@ -1,6 +1,6 @@
-dialog.admin-dashboard-dialog{padding:24px 28px!important}
+dialog.admin-dashboard-dialog{position:fixed!important;inset:0!important;margin:auto!important;padding:24px 28px!important}
 @media(max-width:820px){
-  dialog.admin-dashboard-dialog{width:calc(100% - 12px)!important;padding:18px 14px!important;border-radius:20px!important}
+  dialog.admin-dashboard-dialog{position:fixed!important;inset:0!important;margin:auto!important;width:calc(100% - 12px)!important;max-height:92vh!important;max-height:92dvh!important;padding:18px 14px!important;border-radius:20px!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch}
   body{font-size:14px}
   .header{position:sticky;gap:8px;padding:0 14px;height:66px}
   .brand{font-size:14px;flex-shrink:0}
@@ -45,7 +45,7 @@ dialog.admin-dashboard-dialog{padding:24px 28px!important}
   .map-card{min-height:220px;padding:27px}
   .map-card i{top:87px;right:94px}
   .map-card strong{font-size:53px}
-  dialog{width:calc(100% - 16px);max-height:94vh;padding:27px 18px 22px;border-radius:23px}
+  dialog{position:fixed!important;inset:0!important;margin:auto!important;width:calc(100% - 16px)!important;max-width:480px!important;max-height:92vh!important;max-height:92dvh!important;padding:27px 18px 22px!important;border-radius:23px!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;box-sizing:border-box!important}
   .admin-dialog{width:calc(100% - 16px)}
   dialog h2{font-size:38px;padding-right:24px}
   .form-row{grid-template-columns:1fr}
