@@ -65,3 +65,10 @@ drop trigger if exists on_booking_created on public.bookings;
 create trigger on_booking_created
   after insert on public.bookings
   for each row execute function public.notify_telegram_booking();
+
+-- ============================================================
+-- RLS ПОЛІТИКИ ДЛЯ ОНОВЛЕННЯ СТАТУСУ ТА СИНХРОНІЗАЦІЇ
+-- ============================================================
+-- Дозволяє оновлювати статус заявки (наприклад, переведення у 'completed' адміном):
+create policy if not exists "Allow update bookings" on public.bookings for update using (true);
+

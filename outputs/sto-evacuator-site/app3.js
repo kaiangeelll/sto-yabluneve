@@ -17,7 +17,7 @@ async function sbFetch(path,options={}){
 
 const $=(s,p=document)=>p.querySelector(s),$$=(s,p=document)=>[...p.querySelectorAll(s)],esc=s=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])),stars=n=>'★'.repeat(+n)+'☆'.repeat(5-(+n));
 const save=()=>localStorage.setItem('stoData',JSON.stringify(data)),saveBookings=()=>localStorage.setItem('stoBookings',JSON.stringify(bookings)),saveReviews=()=>localStorage.setItem('stoReviews',JSON.stringify(reviews));
-const split=s=>(s||'').split(';').map(x=>x.trim()).filter(Boolean),status=b=>b.status==='closed'||new Date(`${b.date}T${b.time}`)<new Date()?'Завершено':'Нова';
+const split=s=>(s||'').split(';').map(x=>x.trim()).filter(Boolean),status=b=>b.status==='closed'||b.status==='completed'||new Date(`${b.date}T${b.time}`)<new Date()?'Завершено':'Нова';
 
 function linkFor(kind,digits){
   let v=data[kind]?.trim();
@@ -67,18 +67,21 @@ function refreshTimes(){
 function open(id,service=''){
   let d=$('#'+id);
   if(id==='bookingDialog'){
+    let u=null;
+    try{u=JSON.parse(localStorage.getItem('stoUserSession')||'null');}catch(e){}
+    if(u&&(u.role==='admin'||u.is_admin)){
+      alert('Ви увійшли як адміністратор СТО.\nАдміністратор керує графіком та заявками в Панелі керування. Створення клієнтських заявок для свого акаунта вимкнено.');
+      return;
+    }
     $('#bookingForm').hidden=false;
     $('.success',d).hidden=true;
     $('#bookingForm').reset();
     if(service)$('[data-service-options]').value=service;
-    try{
-      const u=JSON.parse(localStorage.getItem('stoUserSession')||'null');
-      if(u){
-        if(u.name&&u.role!=='admin')$('#bookingForm [name=name]').value=u.name;
-        if(u.phone)$('#bookingForm [name=phone]').value=u.phone;
-        if(u.email&&$('#bookingForm [name=email]'))$('#bookingForm [name=email]').value=u.email;
-      }
-    }catch(e){}
+    if(u){
+      if(u.name&&u.role!=='admin')$('#bookingForm [name=name]').value=u.name;
+      if(u.phone)$('#bookingForm [name=phone]').value=u.phone;
+      if(u.email&&$('#bookingForm [name=email]'))$('#bookingForm [name=email]').value=u.email;
+    }
     refreshTimes();
   }
   if(id==='accountDialog'){
@@ -91,6 +94,9 @@ function open(id,service=''){
       const gv=$('#accountGuestView');if(gv)gv.hidden=false;
       $$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab==='login'));
       $$('[data-panel]').forEach(x=>x.hidden=x.dataset.panel!=='login');
+    }
+    if(typeof syncWithCloud==='function'){
+      syncWithCloud();
     }
   }
   d.showModal();
@@ -235,14 +241,19 @@ function renderBookings(){
     return `<article class="booking-admin-card"><header><strong>${esc(b.name)} · ${esc(b.service)}</strong><span class="status ${st==='Завершено'?'done':''}">${st}</span></header><p>${esc(b.date)} о ${esc(b.time)} · ${esc(b.phone)}${b.note?' · '+esc(b.note):''}</p>${st==='Нова'?`<button data-close-booking="${b.id}">Позначити виконаною</button>`:''}</article>`;
   }).join(''):'<p class="admin-hint">Нових заявок поки немає.</p>';
   $$('[data-close-booking]').forEach(x=>x.onclick=async ()=>{
-    let b=bookings.find(q=>String(q.id)===x.dataset.closeBooking);
+    const targetId=x.dataset.closeBooking;
+    let b=bookings.find(q=>String(q.id)===String(targetId));
     if(b){
       b.status='closed';
       saveBookings();
       renderBookings();
-      if(String(b.id).includes('-')){
-        await sbFetch(`bookings?id=eq.${b.id}`,{method:'PATCH',body:JSON.stringify({status:'completed'})});
+      if(window.renderUserBookings&&window.currentUser){
+        window.renderUserBookings(window.currentUser);
       }
+      refreshTimes();
+      try{
+        await sbFetch(`bookings?id=eq.${b.id}`,{method:'PATCH',body:JSON.stringify({status:'completed'})});
+      }catch(e){}
     }
   });
 }
@@ -263,6 +274,9 @@ async function syncWithCloud(){
     saveBookings();
     renderBookings();
     refreshTimes();
+    if(window.currentUser&&window.renderUserBookings){
+      window.renderUserBookings(window.currentUser);
+    }
   }
   const cloudSettings=await sbFetch('site_settings?id=eq.1&select=*');
   if(cloudSettings&&cloudSettings[0]){

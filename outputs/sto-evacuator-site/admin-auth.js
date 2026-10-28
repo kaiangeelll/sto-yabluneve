@@ -38,9 +38,11 @@
       const bPhone=(b.phone||'').replace(/\D/g,'');
       const bName=(b.name||'').toLowerCase().trim();
       const bNote=(b.note||'').toLowerCase();
-      if(uPhone&&bPhone&&bPhone===uPhone)return true;
-      if(uName&&bName&&bName===uName)return true;
-      if(uEmail&&bNote.includes(uEmail))return true;
+      if(uPhone&&bPhone&&uPhone.length>=7&&bPhone.length>=7){
+        if(bPhone===uPhone||bPhone.endsWith(uPhone.slice(-9))||uPhone.endsWith(bPhone.slice(-9)))return true;
+      }
+      if(uName&&bName&&uName.length>=3&&(bName===uName||bName.includes(uName)||uName.includes(bName)))return true;
+      if(uEmail&&uEmail.length>=5&&bNote.includes(uEmail))return true;
       return false;
     });
 
@@ -52,11 +54,19 @@
     }
 
     listEl.innerHTML=my.slice().reverse().map(b=>{
-      const isPast=b.status==='closed'||new Date(`${b.date}T${b.time}`)<new Date();
-      const badgeText=isPast?'Виконано / Минулий':'Очікує прийому';
-      const badgeClass=isPast?'booking-badge done':'booking-badge';
+      const isCompleted=b.status==='closed'||b.status==='completed';
+      const isPastDate=!isCompleted&&new Date(`${b.date}T${b.time}`)<new Date();
+      let badgeText='🕒 Очікує прийому';
+      let badgeClass='booking-badge pending';
+      if(isCompleted){
+        badgeText='✅ Завершено';
+        badgeClass='booking-badge done';
+      }else if(isPastDate){
+        badgeText='Минулий візит';
+        badgeClass='booking-badge past';
+      }
       return `
-        <div class="user-booking-card">
+        <div class="user-booking-card ${isCompleted?'is-done':''}">
           <div class="user-booking-head">
             <strong>${b.service||'Ремонт авто'}</strong>
             <span class="${badgeClass}">${badgeText}</span>
@@ -110,6 +120,9 @@
     const isAdmin=user.role==='admin'||user.is_admin===true;
     if(adminBox)adminBox.hidden=!isAdmin;
     if(userTabs)userTabs.hidden=isAdmin;
+    dialog.querySelectorAll('[data-profile-panel]').forEach(p=>{
+      p.hidden=isAdmin;
+    });
 
     // Заповнюємо поля редагування
     if(editForm){
@@ -125,8 +138,19 @@
     document.querySelectorAll('[data-open-account]').forEach(btn=>{
       btn.textContent=isAdmin?'Панель керування':`Кабінет (${firstName})`;
     });
+
+    document.querySelectorAll('[data-open-booking]').forEach(btn=>{
+      if(isAdmin){
+        btn.setAttribute('data-admin-active','true');
+        btn.title='Адміністратор керує заявками в Панелі керування';
+      }else{
+        btn.removeAttribute('data-admin-active');
+        btn.title='';
+      }
+    });
   }
   window.showUserProfile=showProfile;
+  window.renderUserBookings=renderUserBookings;
 
   function resetToAuth(){
     if(!dialog)return;
@@ -147,6 +171,10 @@
 
     document.querySelectorAll('[data-open-account]').forEach(btn=>{
       btn.textContent='Кабінет';
+    });
+    document.querySelectorAll('[data-open-booking]').forEach(btn=>{
+      btn.removeAttribute('data-admin-active');
+      btn.title='';
     });
   }
 
