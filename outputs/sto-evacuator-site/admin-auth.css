@@ -351,3 +351,424 @@
   color: #b81c1c !important;
   text-decoration: line-through;
 }
+
+/* ============================================================
+   WIDESCREEN ADMIN DASHBOARD
+   ============================================================ */
+.admin-dashboard-dialog {
+  width: min(1180px, 95vw) !important;
+  max-width: 1200px !important;
+  height: min(860px, 90vh) !important;
+  max-height: 92vh !important;
+  padding: 0 !important;
+  border-radius: 26px !important;
+  overflow: hidden !important;
+  border: 1px solid #d2e4d2 !important;
+  box-shadow: 0 30px 90px rgba(8, 22, 12, 0.32) !important;
+  background: #ffffff !important;
+}
+.admin-dash-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  z-index: 20;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f0f5ee;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1e3b22;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.admin-dash-close:hover {
+  background: #e1ede0;
+  transform: scale(1.08);
+}
+.admin-dashboard-layout {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  height: 100%;
+  min-height: 0;
+}
+
+/* SIDEBAR */
+.admin-dash-sidebar {
+  background: linear-gradient(180deg, #f5faf3 0%, #edf5ea 100%);
+  border-right: 1px solid #d7e6d6;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow-y: auto;
+}
+.admin-dash-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.admin-dash-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: #d6ff4a;
+  border: 2px solid #bce635;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(214, 255, 74, 0.35);
+  flex-shrink: 0;
+}
+.admin-dash-brand-info h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f2413;
+}
+.admin-dash-status {
+  margin: 3px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #357a3e;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2eb846;
+  box-shadow: 0 0 8px rgba(46, 184, 70, 0.6);
+  display: inline-block;
+}
+
+/* CONTACT CARD IN SIDEBAR */
+.admin-dash-contact-card {
+  background: #ffffff;
+  border: 1px solid #d9e7d8;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+.admin-contact-item {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.admin-contact-item:last-child {
+  margin-bottom: 0;
+}
+.admin-contact-item .lbl {
+  display: block;
+  color: #6b806f;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+.admin-contact-item strong {
+  color: #152b19;
+  font-weight: 700;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+/* NAV ITEMS */
+.admin-dash-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #314936;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+.admin-nav-item:hover {
+  background: #e3f0e1;
+  color: #0e2413;
+  transform: translateX(3px);
+}
+.admin-nav-item.active {
+  background: #ffffff;
+  border-color: #c8dec7;
+  color: #0f2713;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+.admin-nav-item .nav-icon {
+  font-size: 17px;
+}
+.admin-nav-item .nav-label {
+  flex: 1;
+}
+.admin-nav-item .nav-badge {
+  background: #d6ff4a;
+  color: #132915;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #bddc39;
+}
+.admin-nav-item .nav-counter {
+  background: #e2ece1;
+  color: #4f6b53;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+/* LOGOUT BUTTON */
+.admin-dash-sidebar-bottom {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #d9e6d8;
+}
+.admin-dash-logout {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d9866c;
+  background: #fff;
+  color: #9a3921;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.admin-dash-logout:hover {
+  background: #fcebe6;
+  border-color: #c25b3e;
+}
+
+/* MAIN CONTENT */
+.admin-dash-main {
+  padding: 28px 34px;
+  overflow-y: auto;
+  min-height: 0;
+  background: #ffffff;
+}
+.admin-dash-form {
+  margin: 0;
+  display: block;
+}
+.admin-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e1ebe0;
+}
+.admin-panel-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #6a806d;
+  margin: 0 0 6px;
+}
+.admin-panel-head h2 {
+  font-size: 26px;
+  line-height: 1.1;
+  margin: 0;
+  color: #0f2413;
+}
+.admin-save-btn {
+  padding: 11px 22px;
+  font-size: 14px;
+  white-space: nowrap;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+/* STATS ROW IN BOOKINGS */
+.admin-stats-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.admin-stat-pill {
+  background: #f0f5ee;
+  border: 1px solid #d6e4d5;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #4a614e;
+  white-space: nowrap;
+}
+.admin-stat-pill b {
+  color: #102614;
+  font-size: 13px;
+}
+.admin-stat-pill.active {
+  background: #fff8e6;
+  border-color: #fae2a0;
+  color: #856404;
+}
+.admin-stat-pill.active b {
+  color: #856404;
+}
+.admin-stat-pill.done {
+  background: #e8f7e9;
+  border-color: #c4e8c6;
+  color: #1c6625;
+}
+.admin-stat-pill.done b {
+  color: #1c6625;
+}
+
+/* BOOKING CARDS IN ADMIN */
+.booking-admin-card {
+  background: #ffffff;
+  border: 1px solid #dbe6db;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+}
+.booking-admin-card:hover {
+  border-color: #bada55;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+.booking-admin-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.booking-admin-card header strong {
+  font-size: 16px;
+  color: #0f2413;
+}
+.booking-admin-card .status {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  white-space: nowrap;
+}
+.booking-admin-card .status.done {
+  background: #e5f7e6;
+  color: #196622;
+  border: 1px solid #bce6bf;
+}
+.booking-admin-card p {
+  font-size: 13px;
+  color: #455949;
+  margin: 0 0 12px;
+  line-height: 1.6;
+}
+.booking-admin-card button {
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.booking-admin-card button:hover {
+  background: #256528;
+  transform: scale(1.03);
+}
+
+/* FORM GRID IN CONTACTS */
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.admin-form-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1b3120;
+}
+.admin-form-grid input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cad8cb;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 860px) {
+  .admin-dashboard-dialog {
+    width: calc(100% - 12px) !important;
+    height: 94vh !important;
+    max-height: 96vh !important;
+    border-radius: 18px !important;
+  }
+  .admin-dashboard-layout {
+    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+  }
+  .admin-dash-sidebar {
+    padding: 14px;
+    border-right: none;
+    border-bottom: 1px solid #d7e6d6;
+    flex-shrink: 0;
+  }
+  .admin-dash-contact-card {
+    display: none;
+  }
+  .admin-dash-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 4px;
+  }
+  .admin-nav-item {
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .admin-dash-sidebar-bottom {
+    display: none;
+  }
+  .admin-dash-main {
+    padding: 16px;
+  }
+  .admin-panel-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-stats-row {
+    flex-wrap: wrap;
+  }
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

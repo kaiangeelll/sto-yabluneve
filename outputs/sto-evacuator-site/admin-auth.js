@@ -313,6 +313,9 @@
         localStorage.setItem('stoUserSession',JSON.stringify(admUser));
         showProfile(admUser);
         if(loginError)loginError.hidden=true;
+        if(dialog)dialog.close();
+        if(typeof fillAdmin==='function')fillAdmin();
+        if(typeof open==='function')open('adminDialog');
         return;
       }
 

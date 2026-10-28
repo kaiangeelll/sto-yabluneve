@@ -106,6 +106,11 @@ function open(id,service=''){
       syncWithCloud();
     }
   }
+  if(id==='adminDialog'){
+    fillAdmin();
+    $$('[data-admin-tab]').forEach(y=>y.classList.toggle('active',y.dataset.adminTab==='bookings'));
+    $$('[data-admin-panel]').forEach(y=>y.hidden=y.dataset.adminPanel!=='bookings');
+  }
   d.showModal();
 }
 function closeAll(){$$('dialog[open]').forEach(x=>x.close())}
@@ -233,7 +238,12 @@ function renderAdminDayDetails(){
 
 function fillAdmin(){
   let f=$('#adminForm');
-  ['name','adminEmail','phone','address','hours','map','whatsapp','viber','telegram','closedDates','closedSlots'].forEach(k=>f.elements[k]?f.elements[k].value=data[k]||'':null);
+  if(f){
+    ['name','adminEmail','phone','address','hours','map','whatsapp','viber','telegram','closedDates','closedSlots'].forEach(k=>f.elements[k]?f.elements[k].value=data[k]||'':null);
+  }
+  const pEl=$('[data-admin-side-phone]');if(pEl)pEl.textContent=data.phone||'+380 68 067 9909';
+  const eEl=$('[data-admin-side-email]');if(eEl)eEl.textContent=data.adminEmail||'admin@sto-yabluneve.ua';
+  const scEl=$('[data-services-count]');if(scEl)scEl.textContent=data.services.length;
   $('[data-admin-services]').innerHTML=data.services.map(row).join('');
   bindRemove();
   renderBookings();
@@ -244,11 +254,31 @@ function fillAdmin(){
 function renderBookings(){
   let t=$('[data-bookings]');if(!t)return;
   let active=bookings.filter(b=>status(b)==='Нова').length;
+  let done=bookings.filter(b=>status(b)==='Завершено').length;
   $$('[data-booking-count]').forEach(x=>x.textContent=active);
+  const totalEl=$('[data-stat-total]');if(totalEl)totalEl.textContent=bookings.length;
+  const doneEl=$('[data-stat-done]');if(doneEl)doneEl.textContent=done;
+  const servCount=$('[data-services-count]');if(servCount)servCount.textContent=data.services.length;
+
   t.innerHTML=bookings.length?bookings.slice().reverse().map(b=>{
     let st=status(b);
-    return `<article class="booking-admin-card"><header><strong>${esc(b.name)} · ${esc(b.service)}</strong><span class="status ${st==='Завершено'?'done':''}">${st}</span></header><p>${esc(b.date)} о ${esc(b.time)} · ${esc(b.phone)}${b.note?' · '+esc(b.note):''}</p>${st==='Нова'?`<button data-close-booking="${b.id}">Позначити виконаною</button>`:''}</article>`;
-  }).join(''):'<p class="admin-hint">Нових заявок поки немає.</p>';
+    const cleanPhone=esc(b.phone).replace(/\D/g,'');
+    return `
+      <article class="booking-admin-card">
+        <header>
+          <div>
+            <strong>${esc(b.name)}</strong> · <span style="color:#256528;font-weight:700;">${esc(b.service)}</span>
+          </div>
+          <span class="status ${st==='Завершено'?'done':''}">${st==='Завершено'?'✅ Завершено':'🕒 Нова заявка'}</span>
+        </header>
+        <p>
+          📅 <b>${esc(b.date)}</b> об <b>${esc(b.time)}</b> · 📞 <a href="tel:${cleanPhone}" style="color:inherit;font-weight:800;text-decoration:underline;">${esc(b.phone)}</a>
+          ${b.note?`<br /><span style="color:#576b5b;font-size:12px;">Примітка: ${esc(b.note)}</span>`:''}
+        </p>
+        ${st==='Нова'?`<button type="button" data-close-booking="${b.id}">✓ Позначити виконаною</button>`:''}
+      </article>
+    `;
+  }).join(''):'<p class="admin-hint" style="text-align:center;padding:28px 0;font-size:14px;">Нових заявок поки немає.</p>';
   $$('[data-close-booking]').forEach(x=>x.onclick=async ()=>{
     const targetId=x.dataset.closeBooking;
     let b=bookings.find(q=>String(q.id)===String(targetId));
@@ -450,22 +480,28 @@ $('#adminForm').onsubmit=async e=>{
     });
     if(submitBtn){
       submitBtn.textContent='✅ Збережено на сайті!';
+      fillAdmin();
       setTimeout(()=>{
         submitBtn.disabled=false;
         submitBtn.textContent=originalText;
-        closeAll();
-      },600);
-    }else{
-      closeAll();
+      },1000);
     }
   }catch(err){
     if(submitBtn){
       submitBtn.disabled=false;
       submitBtn.textContent=originalText;
     }
-    closeAll();
   }
 };
+
+$$('[data-logout-admin]').forEach(btn=>{
+  btn.onclick=()=>{
+    localStorage.removeItem('stoUserSession');
+    window.currentUser=null;
+    closeAll();
+    if(typeof resetToAuth==='function')resetToAuth();
+  };
+});
 
 render();
 syncWithCloud();
