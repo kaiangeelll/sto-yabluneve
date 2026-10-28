@@ -1,5 +1,6 @@
-dialog.admin-dashboard-dialog{padding:0!important;border:none!important}
+dialog.admin-dashboard-dialog{padding:24px 28px!important}
 @media(max-width:820px){
+  dialog.admin-dashboard-dialog{width:calc(100% - 12px)!important;padding:18px 14px!important;border-radius:20px!important}
   body{font-size:14px}
   .header{position:sticky;gap:8px;padding:0 14px;height:66px}
   .brand{font-size:14px;flex-shrink:0}

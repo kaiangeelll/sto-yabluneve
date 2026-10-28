@@ -55,148 +55,143 @@
     <dialog id="accountDialog"><button class="close" data-close>×</button><div id="accountUserView" hidden><div class="user-profile-card"><img class="user-avatar" data-user-avatar alt="Аватар" hidden /><div class="user-avatar-placeholder" data-user-initials>К</div><div class="user-info"><h3 class="user-name" data-user-name>Олександр Шевченко</h3><p class="user-phone" data-user-phone style="margin:2px 0;font-size:13px;font-weight:700;color:#1e3d23;">+380 68 000 00 00</p><p class="user-email" data-user-email style="margin:0;font-size:12px;color:#617565;">user@example.com</p></div><button type="button" class="logout-btn" data-logout>Вийти</button></div><div data-admin-panel-btn-box hidden style="margin-bottom:14px;"><button class="button" data-open-admin style="width:100%;">⚙️ Відкрити керування СТО (Послуги, Ціни, Заявки) <span>→</span></button></div><div class="user-subtabs" data-user-tabs><button type="button" class="active" data-profile-tab="bookings">Мої записи (<span data-my-count>0</span>)</button><button type="button" data-profile-tab="edit">Змінити контакти</button></div><div class="profile-panel" data-profile-panel="bookings"><div data-my-bookings-list style="max-height:240px;overflow-y:auto;margin-bottom:12px;"></div><button type="button" class="button" data-new-booking-btn style="width:100%;">+ Записатися на сервіс <span>→</span></button></div><div class="profile-panel" data-profile-panel="edit" hidden><form id="profileEditForm" class="profile-edit-form"><label>Ім’я та прізвище<input required name="name" /></label><label>Телефон<input name="phone" type="tel" /></label><label>Email<input name="email" type="email" /></label><button class="button" style="width:100%;">Зберегти зміни</button><p class="profile-save-msg" data-save-msg hidden>Дані успішно збережено!</p></form></div></div><div id="accountGuestView"><div class="account-tabs"><button class="active" data-tab="login">Увійти</button><button data-tab="register">Створити кабінет</button></div><section data-panel="login"><p class="eyebrow">ОСОБИСТИЙ КАБІНЕТ</p><h2>Вхід у кабінет</h2><button type="button" class="google-login-btn" data-google-login><svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707 0-.59.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>Увійти через Google</button><div class="oauth-divider"><span>або за номером / поштою</span></div><form id="loginForm"><label>Телефон, Email або логін admin<input required name="login" placeholder="+380... або vash@email.com" /></label><label>Пароль<input required type="password" name="password" placeholder="••••••••" /></label><p class="login-error" data-login-error hidden>Невірний логін або пароль.</p><button class="button">Увійти</button></form></section><section data-panel="register" hidden><p class="eyebrow">ОСОБИСТИЙ КАБІНЕТ</p><h2>Створити кабінет</h2><button type="button" class="google-login-btn" data-google-login><svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707 0-.59.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>Швидка реєстрація через Google</button><div class="oauth-divider"><span>або заповніть форму</span></div><form id="registerForm"><label>Ваше ім’я та прізвище<input required name="name" placeholder="Олександр Шевченко" /></label><label>Телефон <small>(можна не вказувати, якщо є email)</small><input name="phone" type="tel" placeholder="+380 __ ___ __ __" /></label><label>Email <small>(можна не вказувати, якщо є телефон)</small><input name="email" type="email" placeholder="vash@email.com" /></label><label>Пароль<input required type="password" name="password" minlength="4" placeholder="••••••••" /></label><p class="login-error" data-register-error hidden>Вкажіть хоча б телефон або Email.</p><button class="button">Створити кабінет</button></form></section></div></dialog>
 
     <dialog id="adminDialog" class="admin-dashboard-dialog">
-      <button class="close admin-dash-close" data-close>×</button>
-      <div class="admin-dashboard-layout">
-        <aside class="admin-dash-sidebar">
-          <div>
-            <div class="admin-dash-brand">
-              <div class="admin-dash-avatar">🛠️</div>
-              <div class="admin-dash-brand-info">
-                <h3>Адміністратор СТО</h3>
-                <p class="admin-dash-status"><span class="status-dot"></span> Панель керування</p>
+      <button class="close admin-dialog-close" data-close aria-label="Закрити">×</button>
+
+      <!-- ВЕРХНЯ ШАПКА АДМІНА -->
+      <div class="admin-topbar">
+        <div class="admin-topbar-profile">
+          <div class="admin-topbar-avatar">🛠️</div>
+          <div class="admin-topbar-info">
+            <div class="admin-topbar-title-row">
+              <h3>Адміністратор СТО</h3>
+              <span class="admin-status-badge">🟢 Онлайн</span>
+            </div>
+            <p class="admin-topbar-contacts">
+              <span>📞 <b data-admin-side-phone>+380 68 067 9909</b></span>
+              <span class="sep">·</span>
+              <span>✉️ <b data-admin-side-email>admin@sto-yabluneve.ua</b></span>
+            </p>
+          </div>
+        </div>
+        <div class="admin-topbar-actions">
+          <button type="button" class="admin-logout-btn" data-logout-admin>Вийти з кабінету</button>
+        </div>
+      </div>
+
+      <!-- КРАСИВІ ГОРИЗОНТАЛЬНІ ПЛАШКИ (ВКЛАДКИ) -->
+      <div class="admin-tabs-nav">
+        <button type="button" class="admin-tab-pill active" data-admin-tab="bookings">
+          <span class="tab-icon">📋</span>
+          <span class="tab-text">Заявки клієнтів</span>
+          <span class="tab-count-badge" data-booking-count>0</span>
+        </button>
+        <button type="button" class="admin-tab-pill" data-admin-tab="services">
+          <span class="tab-icon">🔧</span>
+          <span class="tab-text">Послуги та ціни</span>
+          <span class="tab-count-sub" data-services-count>10</span>
+        </button>
+        <button type="button" class="admin-tab-pill" data-admin-tab="calendar">
+          <span class="tab-icon">📅</span>
+          <span class="tab-text">Графік та вихідні</span>
+        </button>
+        <button type="button" class="admin-tab-pill" data-admin-tab="settings">
+          <span class="tab-icon">⚙️</span>
+          <span class="tab-text">Налаштування СТО</span>
+        </button>
+      </div>
+
+      <!-- ГОЛОВНА ОБЛАСТЬ КОНТЕНТУ -->
+      <div class="admin-content-area">
+        <form id="adminForm" class="admin-main-form">
+          <!-- 1. ВКЛАДКА ЗАЯВКИ -->
+          <section class="admin-dash-panel" data-admin-panel="bookings">
+            <div class="admin-panel-header">
+              <div>
+                <p class="admin-panel-sub">ОНЛАЙН-ЗАПИСИ</p>
+                <h2 class="admin-panel-title">Заявки клієнтів на сервіс</h2>
+              </div>
+              <div class="admin-stats-pills">
+                <div class="stat-pill">Всього: <b data-stat-total>0</b></div>
+                <div class="stat-pill highlight-active">Нові: <b data-booking-count>0</b></div>
+                <div class="stat-pill highlight-done">Виконано: <b data-stat-done>0</b></div>
               </div>
             </div>
+            <div class="booking-admin-list" data-bookings></div>
+          </section>
 
-            <div class="admin-dash-contact-card">
-              <div class="admin-contact-item">
-                <span class="lbl">Телефон СТО:</span>
-                <strong data-admin-side-phone>+380 68 067 9909</strong>
+          <!-- 2. ВКЛАДКА ПОСЛУГИ ТА ЦІНИ -->
+          <section class="admin-dash-panel" data-admin-panel="services" hidden>
+            <div class="admin-panel-header">
+              <div>
+                <p class="admin-panel-sub">ПРАЙС-ЛИСТ</p>
+                <h2 class="admin-panel-title">Редагування послуг та цін</h2>
               </div>
-              <div class="admin-contact-item">
-                <span class="lbl">Email сповіщень:</span>
-                <strong data-admin-side-email>admin@sto-yabluneve.ua</strong>
+              <button type="submit" class="button admin-save-btn">Зберегти зміни</button>
+            </div>
+            <p class="admin-panel-hint">Змінюйте назви та ціни (наприклад, «від 500 ₴», «1 200 ₴»). Зміни миттєво публікуються в каталозі сайту:</p>
+            <div data-admin-services class="admin-services-container"></div>
+            <div class="admin-services-actions" style="margin-top:14px;">
+              <button class="add-service" type="button" data-add-service>+ Додати нову послугу</button>
+            </div>
+          </section>
+
+          <!-- 3. ВКЛАДКА КАЛЕНДАР І ГОДИНИ -->
+          <section class="admin-dash-panel" data-admin-panel="calendar" hidden>
+            <div class="admin-panel-header">
+              <div>
+                <p class="admin-panel-sub">РОЗКЛАД РОБОТИ</p>
+                <h2 class="admin-panel-title">Календар та блокування годин</h2>
+              </div>
+              <button type="submit" class="button admin-save-btn">Зберегти графік</button>
+            </div>
+            <p class="admin-panel-hint">Клікніть на дату, щоб закрити день (зробити вихідним) або заблокувати окремі години прийому. Зміни зберігаються автоматично:</p>
+            <div class="admin-calendar-widget" data-admin-calendar>
+              <div class="admin-cal-nav">
+                <button type="button" data-admin-cal-prev>←</button>
+                <strong data-admin-cal-title>Листопад 2026</strong>
+                <button type="button" data-admin-cal-next>→</button>
+              </div>
+              <div class="admin-cal-grid" data-admin-cal-grid></div>
+              <div class="admin-day-manager" data-admin-day-manager hidden>
+                <div class="admin-day-title">
+                  <span>Обрана дата: <b data-admin-selected-date>2026-11-02</b></span>
+                  <button type="button" class="admin-toggle-whole-day" data-toggle-whole-day>Закрити весь день</button>
+                </div>
+                <p class="admin-panel-hint" style="margin:6px 0 10px;">Недоступні години для цієї дати (клікніть для блокування):</p>
+                <div class="admin-hours-grid" data-admin-hours-grid></div>
               </div>
             </div>
+            <input type="hidden" name="closedDates" />
+            <input type="hidden" name="closedSlots" />
+          </section>
 
-            <nav class="admin-dash-nav">
-              <button type="button" class="admin-nav-item active" data-admin-tab="bookings">
-                <span class="nav-icon">📋</span>
-                <span class="nav-label">Заявки клієнтів</span>
-                <span class="nav-badge" data-booking-count>0</span>
-              </button>
-              <button type="button" class="admin-nav-item" data-admin-tab="calendar">
-                <span class="nav-icon">📅</span>
-                <span class="nav-label">Графік та вихідні</span>
-              </button>
-              <button type="button" class="admin-nav-item" data-admin-tab="services">
-                <span class="nav-icon">🔧</span>
-                <span class="nav-label">Послуги та ціни</span>
-                <span class="nav-counter" data-services-count>10</span>
-              </button>
-              <button type="button" class="admin-nav-item" data-admin-tab="settings">
-                <span class="nav-icon">⚙️</span>
-                <span class="nav-label">Контакти та СТО</span>
-              </button>
-            </nav>
-          </div>
-
-          <div class="admin-dash-sidebar-bottom">
-            <button type="button" class="admin-dash-logout" data-logout-admin>Вийти з кабінету</button>
-          </div>
-        </aside>
-
-        <main class="admin-dash-main">
-          <form id="adminForm" class="admin-dash-form">
-            <!-- Вкладка 1: Заявки клієнтів -->
-            <section class="admin-dash-panel" data-admin-panel="bookings">
-              <div class="admin-panel-head">
-                <div>
-                  <p class="admin-panel-eyebrow">ОНЛАЙН-ЗАЯВКИ</p>
-                  <h2>Заявки клієнтів на сервіс</h2>
-                </div>
-                <div class="admin-stats-row">
-                  <div class="admin-stat-pill">Всього: <b data-stat-total>0</b></div>
-                  <div class="admin-stat-pill active">Нові: <b data-booking-count>0</b></div>
-                  <div class="admin-stat-pill done">Виконано: <b data-stat-done>0</b></div>
-                </div>
+          <!-- 4. ВКЛАДКА КОНТАКТИ ТА НАЛАШТУВАННЯ -->
+          <section class="admin-dash-panel" data-admin-panel="settings" hidden>
+            <div class="admin-panel-header">
+              <div>
+                <p class="admin-panel-sub">КОНТАКТИ ТА ДАНІ</p>
+                <h2 class="admin-panel-title">Налаштування сервісу</h2>
               </div>
-              <div class="booking-admin-list" data-bookings></div>
-            </section>
-
-            <!-- Вкладка 2: Графік та вихідні -->
-            <section class="admin-dash-panel" data-admin-panel="calendar" hidden>
-              <div class="admin-panel-head">
-                <div>
-                  <p class="admin-panel-eyebrow">РОЗКЛАД РОБОТИ</p>
-                  <h2>Календар та закриті години</h2>
-                </div>
-                <button type="submit" class="button admin-save-btn">Зберегти зміни</button>
+              <button type="submit" class="button admin-save-btn">Зберегти налаштування</button>
+            </div>
+            <div class="admin-settings-grid">
+              <label>Назва автосервісу<input name="name" placeholder="СТО Евакуатор" /></label>
+              <label>Email для сповіщень про заявки <small>пошта адміністратора</small><input name="adminEmail" placeholder="sto.yabluneve@gmail.com" /></label>
+              <label>Основний телефон СТО<input name="phone" placeholder="+380 68 067 9909" /></label>
+              <label>Графік роботи текстом<input name="hours" placeholder="Пн–Пт: 09:00–19:00 · Сб: 09:00–15:00 · Нд: Вихідний" /></label>
+              <label style="grid-column: 1 / -1;">Адреса СТО<input name="address" placeholder="вул. Яблунева, 20, Нове, Київська область, 08150" /></label>
+              <label style="grid-column: 1 / -1;">Посилання на Google Maps<input name="map" placeholder="https://maps.app.goo.gl/..." /></label>
+            </div>
+            <fieldset class="admin-fieldset" style="margin-top:18px;">
+              <legend>Кнопки прямого зв'язку (месенджери)</legend>
+              <div class="admin-settings-grid">
+                <label>WhatsApp (номер або посилання)<input name="whatsapp" placeholder="+380680679909 або https://wa.me/..." /></label>
+                <label>Viber (номер або посилання)<input name="viber" placeholder="+380680679909 або viber://..." /></label>
+                <label style="grid-column: 1 / -1;">Telegram (юзернейм або посилання)<input name="telegram" placeholder="@username або https://t.me/..." /></label>
               </div>
-              <p class="admin-hint" style="margin-bottom:14px;">Клікніть на дату в календарі, щоб закрити весь день або вимкнути окремі години прийому. Зміни зберігаються автоматично:</p>
-              <div class="admin-calendar-widget" data-admin-calendar>
-                <div class="admin-cal-nav">
-                  <button type="button" data-admin-cal-prev>←</button>
-                  <strong data-admin-cal-title>Листопад 2026</strong>
-                  <button type="button" data-admin-cal-next>→</button>
-                </div>
-                <div class="admin-cal-grid" data-admin-cal-grid></div>
-                <div class="admin-day-manager" data-admin-day-manager hidden>
-                  <div class="admin-day-title">
-                    <span>Дата: <b data-admin-selected-date>2026-11-02</b></span>
-                    <button type="button" class="admin-toggle-whole-day" data-toggle-whole-day>Закрити весь день</button>
-                  </div>
-                  <p class="admin-hint" style="margin:4px 0 8px;">Недоступні години для цієї дати (клікніть для блокування):</p>
-                  <div class="admin-hours-grid" data-admin-hours-grid></div>
-                </div>
-              </div>
-              <input type="hidden" name="closedDates" />
-              <input type="hidden" name="closedSlots" />
-            </section>
-
-            <!-- Вкладка 3: Послуги та ціни -->
-            <section class="admin-dash-panel" data-admin-panel="services" hidden>
-              <div class="admin-panel-head">
-                <div>
-                  <p class="admin-panel-eyebrow">ПРАЙС-ЛИСТ</p>
-                  <h2>Послуги та вартість</h2>
-                </div>
-                <button type="submit" class="button admin-save-btn">Зберегти зміни</button>
-              </div>
-              <p class="admin-hint" style="margin-bottom:14px;">Ціна може бути «від 500 ₴», «500–1 200 ₴» або фіксованою. Зміни миттєво з'являються на сайті:</p>
-              <div data-admin-services class="admin-services-list"></div>
-              <div style="margin-top:14px;">
-                <button class="add-service" type="button" data-add-service>+ Додати нову послугу</button>
-              </div>
-            </section>
-
-            <!-- Вкладка 4: Контакти та СТО -->
-            <section class="admin-dash-panel" data-admin-panel="settings" hidden>
-              <div class="admin-panel-head">
-                <div>
-                  <p class="admin-panel-eyebrow">НАЛАШТУВАННЯ САЙТУ</p>
-                  <h2>Контакти та інформація</h2>
-                </div>
-                <button type="submit" class="button admin-save-btn">Зберегти зміни</button>
-              </div>
-              <div class="admin-form-grid">
-                <label>Назва сервісу<input name="name" placeholder="СТО Евакуатор" /></label>
-                <label>Email для сповіщень про заявки <small>пошта адміністратора</small><input name="adminEmail" placeholder="sto.yabluneve@gmail.com" /></label>
-                <label>Телефон СТО<input name="phone" placeholder="+380 68 067 9909" /></label>
-                <label>Графік роботи текстом<input name="hours" placeholder="Щодня · 09:00–19:00" /></label>
-                <label style="grid-column: 1 / -1;">Адреса СТО<input name="address" placeholder="вул. Яблунева, 20, Нове, Київська область, 08150" /></label>
-                <label style="grid-column: 1 / -1;">Посилання на Google Maps<input name="map" placeholder="https://maps.app.goo.gl/..." /></label>
-              </div>
-              <fieldset style="margin-top:16px;">
-                <legend>Месенджери (кнопки зв'язку на сайті)</legend>
-                <div class="admin-form-grid">
-                  <label>WhatsApp (номер або посилання)<input name="whatsapp" placeholder="+380680679909 або https://wa.me/..." /></label>
-                  <label>Viber (номер або посилання)<input name="viber" placeholder="+380680679909 або viber://..." /></label>
-                  <label style="grid-column: 1 / -1;">Telegram (юзернейм або посилання)<input name="telegram" placeholder="@username або https://t.me/..." /></label>
-                </div>
-              </fieldset>
-            </section>
-          </form>
-        </main>
+            </fieldset>
+          </section>
+        </form>
       </div>
     </dialog>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

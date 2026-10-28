@@ -132,28 +132,45 @@ function render(){
 }
 
 function unavailable(date,time){
-  if(!date)return '';
+  if(!date||!time)return '';
   const d=new Date(date+'T12:00:00');
   const day=d.getDay();
   if(day===0)return 'У неділю автосервіс зачинений (вихідний).';
   if(day===6&&time>'14:00')return 'У суботу автосервіс працює до 15:00.';
-  if(split(data.closedDates).includes(date))return 'Цей день зачинений адміністратором.';
-  if(split(data.closedSlots).includes(`${date} ${time}`))return 'Цей час недоступний.';
-  if(bookings.some(b=>b.date===date&&b.time===time&&status(b)==='Нова'))return 'Цей час уже зайнятий.';
+  if(split(data.closedDates).includes(date.trim()))return 'Цей день зачинений адміністратором.';
+  if(split(data.closedSlots).includes(`${date.trim()} ${time.trim().slice(0,5)}`))return 'Цей час заблоковано адміністратором.';
+
+  const tNorm=time.trim().slice(0,5);
+  const isBooked=bookings.some(b=>{
+    const bDate=(b.date||'').trim();
+    const bTime=(b.time||'').trim().slice(0,5);
+    return bDate===date.trim() && bTime===tNorm && status(b)==='Нова';
+  });
+  if(isBooked)return 'Цей час уже зайнятий іншим клієнтом.';
   return '';
 }
 
 function refreshTimes(){
-  let date=$('#bookingForm [name=date]').value,select=$('[data-time-options]'),note=$('[data-availability]'),submit=$('#bookingForm [type=submit]');
-  if(!date){select.innerHTML='<option value="">Спочатку оберіть дату</option>';select.disabled=true;note.textContent='Оберіть дату, щоб побачити вільний час.';submit.disabled=true;return;}
+  let date=$('#bookingForm [name=date]').value,
+      select=$('[data-time-options]'),
+      note=$('[data-availability]'),
+      submit=$('#bookingForm [type=submit]');
+  if(!date){
+    select.innerHTML='<option value="">Спочатку оберіть дату</option>';
+    select.disabled=true;
+    note.textContent='Оберіть дату, щоб побачити вільний час.';
+    submit.disabled=true;
+    return;
+  }
 
   const d=new Date(date+'T12:00:00');
   const day=d.getDay();
   if(day===0){
-    select.innerHTML='<option value="">Неділя — вихідний</option>';
+    select.innerHTML='<option value="" disabled selected>Неділя — вихідний день</option>';
     select.disabled=true;
     submit.disabled=true;
     note.textContent='У неділю автосервіс не працює (вихідний). Оберіть будній день або суботу.';
+    note.style.color='#c0392b';
     return;
   }
 
@@ -162,11 +179,34 @@ function refreshTimes(){
     times=['09:00','10:00','11:00','12:00','13:00','14:00']; // Субота до 15:00
   }
 
-  let closed=split(data.closedDates).includes(date);
-  let free=times.filter(t=>!unavailable(date,t));
-  select.innerHTML=free.length?free.map(t=>`<option>${t}</option>`).join(''):'<option value="">Вільного часу немає</option>';
-  select.disabled=!free.length;submit.disabled=!free.length;
-  note.textContent=closed?'На цю дату запис недоступний — сервіс зачинений.':free.length?`Доступно ${free.length} вільн. слотів.${day===6?' (Субота до 15:00)':''}`:'На цю дату немає вільного часу. Оберіть інший день.';
+  let optionsHtml='<option value="">Оберіть зручний час</option>';
+  let freeCount=0;
+
+  times.forEach(t=>{
+    const reason=unavailable(date,t);
+    if(!reason){
+      freeCount++;
+      optionsHtml+=`<option value="${t}">🟢 ${t} — Вільно для запису</option>`;
+    }else if(reason.includes('зайнятий')){
+      optionsHtml+=`<option value="" disabled style="color:#b82618;background:#fdeeee;">❌ ${t} — Зайнято (запис клієнта)</option>`;
+    }else if(reason.includes('заблоковано')||reason.includes('недоступний')||reason.includes('зачинений')){
+      optionsHtml+=`<option value="" disabled style="color:#777;background:#f0f0f0;">⛔ ${t} — Недоступно (перерва)</option>`;
+    }else{
+      optionsHtml+=`<option value="" disabled style="color:#777;">⛔ ${t}</option>`;
+    }
+  });
+
+  select.innerHTML=optionsHtml;
+  select.disabled=!freeCount;
+  submit.disabled=!freeCount;
+
+  if(freeCount>0){
+    note.textContent=`Доступно ${freeCount} вільн. слотів.${day===6?' (Субота до 15:00).':''} Зайнятий час заблоковано.`;
+    note.style.color='#246828';
+  }else{
+    note.textContent='На цю дату весь час уже зайнятий клієнтами або недоступний. Оберіть інший день.';
+    note.style.color='#c0392b';
+  }
 }
 
 function open(id,service=''){
