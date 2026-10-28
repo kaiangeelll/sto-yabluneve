@@ -60,6 +60,7 @@
           uEmail=(user.email||'').toLowerCase().trim();
 
     const my=allBookings.filter(b=>{
+      if(b.status==='archived')return false;
       const bPhone=b.phone||'';
       const bName=(b.name||'').toLowerCase().trim();
       const bNote=(b.note||'').toLowerCase();
@@ -179,6 +180,7 @@
       }
 
       const isAdmin=user.role==='admin'||user.is_admin===true;
+      document.body.classList.toggle('is-admin-session',isAdmin);
       if(adminBox)adminBox.hidden=!isAdmin;
       if(userTabs)userTabs.hidden=isAdmin;
       dialog.querySelectorAll('[data-profile-panel]').forEach(p=>{
@@ -226,6 +228,7 @@
     window.currentUser=null;
     targetResetUser=null;
     localStorage.removeItem('stoUserSession');
+    document.body.classList.remove('is-admin-session');
 
     // Ховаємо кабінет на сторінці
     const inlineDash=document.querySelector('#userInlineDashboard');

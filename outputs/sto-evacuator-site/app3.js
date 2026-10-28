@@ -23,6 +23,7 @@ const $=(s,p=document)=>p.querySelector(s),$$=(s,p=document)=>[...p.querySelecto
 const save=()=>localStorage.setItem('stoData',JSON.stringify(data)),saveBookings=()=>localStorage.setItem('stoBookings',JSON.stringify(bookings)),saveReviews=()=>localStorage.setItem('stoReviews',JSON.stringify(reviews));
 const split=s=>(s||'').split(';').map(x=>x.trim()).filter(Boolean);
 const status=b=>{
+  if(b.status==='archived')return 'Архів';
   if(b.status==='closed'||b.status==='completed')return 'Завершено';
   if(b.status==='rejected')return 'Відхилено';
   if(b.status==='confirmed'||b.status==='accepted')return 'Підтверджено';
@@ -445,16 +446,65 @@ function renderAdminReviews(){
   });
 }
 
+let adminBookingFilter='all';
+
 function renderBookings(){
   let t=$('[data-bookings]');if(!t)return;
-  let active=bookings.filter(b=>status(b)==='Нова'||status(b)==='Підтверджено').length;
-  let done=bookings.filter(b=>status(b)==='Завершено').length;
-  $$('[data-booking-count]').forEach(x=>x.textContent=active);
-  const totalEl=$('[data-stat-total]');if(totalEl)totalEl.textContent=bookings.length;
-  const doneEl=$('[data-stat-done]');if(doneEl)doneEl.textContent=done;
+  let activeBookings=bookings.filter(b=>b.status!=='archived');
+  let newCount=bookings.filter(b=>status(b)==='Нова').length;
+  let doneCount=bookings.filter(b=>status(b)==='Завершено').length;
+  let archivedCount=bookings.filter(b=>status(b)==='Архів').length;
+
+  $$('[data-booking-count]').forEach(x=>x.textContent=newCount);
+  const totalEl=$('[data-stat-total]');if(totalEl)totalEl.textContent=activeBookings.length;
+  const doneEl=$('[data-stat-done]');if(doneEl)doneEl.textContent=doneCount;
+  const archEl=$('[data-stat-archived]');if(archEl)archEl.textContent=archivedCount;
   const servCount=$('[data-services-count]');if(servCount)servCount.textContent=data.services.length;
 
-  t.innerHTML=bookings.length?bookings.slice().reverse().map(b=>{
+  $$('[data-booking-filter]').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.bookingFilter===adminBookingFilter);
+    btn.onclick=()=>{
+      adminBookingFilter=btn.dataset.bookingFilter;
+      renderBookings();
+    };
+  });
+
+  const clearBtn=$('[data-clear-test-bookings]');
+  if(clearBtn){
+    clearBtn.onclick=async ()=>{
+      if(!bookings.length){
+        alert('Список заявок уже порожній.');
+        return;
+      }
+      const choice=confirm('Ви впевнені, що хочете очистити тестові заявки?\nНатисніть OK для повного видалення.');
+      if(!choice)return;
+      const idsToDelete=bookings.map(b=>b.id);
+      bookings=[];
+      saveBookings();
+      renderBookings();
+      if(window.renderUserBookings&&window.currentUser){
+        window.renderUserBookings(window.currentUser);
+      }
+      refreshTimes();
+      for(const id of idsToDelete){
+        try{await sbFetch(`bookings?id=eq.${id}`,{method:'DELETE'});}catch(e){}
+      }
+      alert('Заявки успішно очищено!');
+    };
+  }
+
+  let displayList=bookings.slice().reverse();
+  if(adminBookingFilter==='all'){
+    displayList=displayList.filter(b=>b.status!=='archived');
+  }else if(adminBookingFilter==='new'){
+    displayList=displayList.filter(b=>status(b)==='Нова');
+  }else if(adminBookingFilter==='done'){
+    displayList=displayList.filter(b=>status(b)==='Завершено');
+  }else if(adminBookingFilter==='archived'){
+    displayList=displayList.filter(b=>status(b)==='Архів');
+  }
+
+  t.innerHTML=displayList.length?displayList.map(b=>{
     let st=status(b);
     const cleanPhone=esc(b.phone).replace(/\D/g,'');
     let badgeClass='status';
@@ -469,10 +519,13 @@ function renderBookings(){
     }else if(st==='Відхилено'){
       badgeClass='status rejected';
       badgeText='❌ Відхилено';
+    }else if(st==='Архів'){
+      badgeClass='status past';
+      badgeText='📁 В архіві';
     }
 
     return `
-      <article class="booking-admin-card ${st==='Підтверджено'?'is-confirmed':''} ${st==='Відхилено'?'is-rejected':''}">
+      <article class="booking-admin-card ${st==='Підтверджено'?'is-confirmed':''} ${st==='Відхилено'?'is-rejected':''} ${st==='Архів'?'is-archived':''}">
         <header>
           <div>
             <strong>${esc(b.name)}</strong> · <span style="color:#256528;font-weight:700;">${esc(b.service)}</span>
@@ -488,15 +541,27 @@ function renderBookings(){
           ${st==='Нова'?`
             <button type="button" class="admin-accept-btn" data-accept-booking="${b.id}">🟢 Прийняти заявку</button>
             <button type="button" class="admin-reject-btn" data-reject-booking="${b.id}">❌ Відхилити</button>
+            <button type="button" class="admin-archive-btn" data-archive-booking="${b.id}">📁 В архів</button>
+            <button type="button" class="admin-delete-btn" data-delete-booking="${b.id}">🗑️ Видалити</button>
           `:''}
           ${st==='Підтверджено'?`
             <button type="button" class="admin-accept-btn" data-close-booking="${b.id}">✓ Позначити виконаною</button>
             <button type="button" class="admin-reject-btn" data-reject-booking="${b.id}">Скасувати / Відхилити</button>
+            <button type="button" class="admin-archive-btn" data-archive-booking="${b.id}">📁 В архів</button>
+            <button type="button" class="admin-delete-btn" data-delete-booking="${b.id}">🗑️ Видалити</button>
+          `:''}
+          ${st==='Завершено'||st==='Відхилено'?`
+            <button type="button" class="admin-archive-btn" data-archive-booking="${b.id}">📁 В архів</button>
+            <button type="button" class="admin-delete-btn" data-delete-booking="${b.id}">🗑️ Видалити</button>
+          `:''}
+          ${st==='Архів'?`
+            <button type="button" class="admin-accept-btn" data-unarchive-booking="${b.id}">↩️ Відновити з архіву</button>
+            <button type="button" class="admin-delete-btn" data-delete-booking="${b.id}">🗑️ Видалити назавжди</button>
           `:''}
         </div>
       </article>
     `;
-  }).join(''):'<p class="admin-hint" style="text-align:center;padding:28px 0;font-size:14px;">Нових заявок поки немає.</p>';
+  }).join(''):`<p class="admin-hint" style="text-align:center;padding:28px 0;font-size:14px;">${adminBookingFilter==='archived'?'В архіві немає заявок.':'Заявок у цій категорії немає.'}</p>`;
 
   // Прийняти заявку
   $$('[data-accept-booking]').forEach(x=>x.onclick=async ()=>{
@@ -554,6 +619,58 @@ function renderBookings(){
       }catch(e){}
     }
   });
+
+  // Відправити в архів
+  $$('[data-archive-booking]').forEach(x=>x.onclick=async ()=>{
+    const targetId=x.dataset.archiveBooking;
+    let b=bookings.find(q=>String(q.id)===String(targetId));
+    if(b){
+      b.status='archived';
+      saveBookings();
+      renderBookings();
+      if(window.renderUserBookings&&window.currentUser){
+        window.renderUserBookings(window.currentUser);
+      }
+      refreshTimes();
+      try{
+        await sbFetch(`bookings?id=eq.${b.id}`,{method:'PATCH',body:JSON.stringify({status:'archived'})});
+      }catch(e){}
+    }
+  });
+
+  // Відновити з архіву
+  $$('[data-unarchive-booking]').forEach(x=>x.onclick=async ()=>{
+    const targetId=x.dataset.unarchiveBooking;
+    let b=bookings.find(q=>String(q.id)===String(targetId));
+    if(b){
+      b.status='confirmed';
+      saveBookings();
+      renderBookings();
+      if(window.renderUserBookings&&window.currentUser){
+        window.renderUserBookings(window.currentUser);
+      }
+      refreshTimes();
+      try{
+        await sbFetch(`bookings?id=eq.${b.id}`,{method:'PATCH',body:JSON.stringify({status:'confirmed'})});
+      }catch(e){}
+    }
+  });
+
+  // Видалити заявку
+  $$('[data-delete-booking]').forEach(x=>x.onclick=async ()=>{
+    const targetId=x.dataset.deleteBooking;
+    if(!confirm('Видалити цю заявку назавжди?'))return;
+    bookings=bookings.filter(q=>String(q.id)!==String(targetId));
+    saveBookings();
+    renderBookings();
+    if(window.renderUserBookings&&window.currentUser){
+      window.renderUserBookings(window.currentUser);
+    }
+    refreshTimes();
+    try{
+      await sbFetch(`bookings?id=eq.${targetId}`,{method:'DELETE'});
+    }catch(e){}
+  });
 }
 
 async function syncWithCloud(){
@@ -567,7 +684,7 @@ async function syncWithCloud(){
       date:b.booking_date,
       time:b.booking_time,
       note:b.note,
-      status:b.status==='completed'||b.status==='closed'?'closed':b.status==='confirmed'||b.status==='accepted'?'confirmed':b.status==='rejected'?'rejected':'new',
+      status:b.status==='archived'?'archived':b.status==='completed'||b.status==='closed'?'closed':b.status==='confirmed'||b.status==='accepted'?'confirmed':b.status==='rejected'?'rejected':'new',
       reject_reason:(b.note&&b.note.includes('Відхилено: '))?b.note.split('Відхилено: ')[1]:''
     }));
     saveBookings();

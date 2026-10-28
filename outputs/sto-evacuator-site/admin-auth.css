@@ -825,6 +825,7 @@ dialog.admin-dashboard-dialog {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 .stat-pill {
   background: #ffffff;
@@ -834,6 +835,41 @@ dialog.admin-dashboard-dialog {
   font-size: 13px;
   color: #455d49;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+}
+button.stat-pill {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+button.stat-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+button.stat-pill.active {
+  background: #1e3d23 !important;
+  color: #ffffff !important;
+  border-color: #1e3d23 !important;
+}
+button.stat-pill.active b {
+  color: #ffffff !important;
+}
+.stat-pill.highlight-archive {
+  background: #f1f5f1;
+  border-color: #cbd8cc;
+  color: #3b5c3e;
+}
+.stat-pill.highlight-archive b {
+  color: #1e3d23;
+}
+.stat-pill.clear-btn {
+  background: #fdf2ef;
+  border-color: #f3c2b4;
+  color: #b83018;
+  font-weight: 700;
+  margin-left: auto;
+}
+.stat-pill.clear-btn:hover {
+  background: #fae0d8;
 }
 .stat-pill b {
   color: #0f2413;
@@ -854,6 +890,45 @@ dialog.admin-dashboard-dialog {
 }
 .stat-pill.highlight-done b {
   color: #1a6b24;
+}
+
+.admin-archive-btn {
+  background: #f0f5f0;
+  border: 1px solid #c7d8c7;
+  color: #274c2b;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.admin-archive-btn:hover {
+  background: #e0eee0;
+  border-color: #74c043;
+}
+
+.admin-delete-btn {
+  background: #fdf0ec;
+  border: 1px solid #f2c7b8;
+  color: #b83018;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.admin-delete-btn:hover {
+  background: #f8ded7;
+  border-color: #c95238;
+}
+
+/* Hide booking elements when admin is logged in */
+body.is-admin-session [data-open-booking],
+body.is-admin-session .booking-banner,
+body.is-admin-session [data-new-booking-btn] {
+  display: none !important;
 }
 
 /* BOOKING CARDS */
