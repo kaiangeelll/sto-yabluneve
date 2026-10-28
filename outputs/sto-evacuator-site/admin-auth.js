@@ -383,12 +383,39 @@
     };
   });
 
+  function safeDecodeJwt(jwtStr){
+    try{
+      const parts=jwtStr.split('.');
+      if(parts.length<2)return null;
+      let b64=parts[1].replace(/-/g,'+').replace(/_/g,'/');
+      while(b64.length%4!==0){b64+='=';}
+      const binStr=atob(b64);
+      const bytes=Uint8Array.from(binStr,c=>c.charCodeAt(0));
+      return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    }catch(e){
+      console.warn('JWT Decode failed:',e);
+      return null;
+    }
+  }
+
   // Check existing session & direct OAuth parser
   async function checkSession(){
     const hash=window.location.hash?window.location.hash.substring(1):'';
     const search=window.location.search?window.location.search.substring(1):'';
 
-    // 1. ПРЯМИЙ РОЗБІР ACCESS_TOKEN З URL (Миттєво після повернення з Google)
+    // 0. Перевірка на помилки авторизації від Google
+    if(hash.includes('error=')||search.includes('error=')){
+      const errParams={};
+      (hash+'&'+search).split('&').forEach(part=>{
+        const [k,v]=part.split('=');
+        if(k&&v)errParams[decodeURIComponent(k)]=decodeURIComponent(v);
+      });
+      if(errParams.error||errParams.error_description){
+        alert('Помилка входу через Google: '+(errParams.error_description||errParams.error));
+      }
+    }
+
+    // 1. ПРЯМИЙ БЕЗВІДМОВНИЙ РОЗБІР ACCESS_TOKEN З URL (Миттєво після повернення з Google)
     if(hash.includes('access_token=')){
       try{
         const params={};
@@ -398,12 +425,8 @@
         });
 
         if(params.access_token){
-          const parts=params.access_token.split('.');
-          if(parts[1]){
-            const base64=parts[1].replace(/-/g,'+').replace(/_/g,'/');
-            const jsonStr=decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-            const payload=JSON.parse(jsonStr);
-
+          const payload=safeDecodeJwt(params.access_token);
+          if(payload){
             const meta=payload.user_metadata||{};
             const userFromToken={
               id:payload.sub,
