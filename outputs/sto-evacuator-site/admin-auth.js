@@ -7,7 +7,7 @@
     sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   }
 
-  const ADMIN_EMAILS=['maxkrasava55@gmail.com'];
+  const ADMIN_EMAILS=[];
 
   const dialog=document.querySelector('#accountDialog'),
         form=document.querySelector('#loginForm'),
