@@ -24,17 +24,26 @@
     userBox.hidden=false;
 
     const name=user.name||user.user_metadata?.full_name||user.user_metadata?.name||user.email||user.phone||'Клієнт';
-    const email=user.email||user.phone||'';
+    const email=user.email||'';
+    const phone=user.phone||'';
     const avatar=user.user_metadata?.avatar_url||user.user_metadata?.picture;
 
     const nameEl=dialog.querySelector('[data-user-name]');
     const emailEl=dialog.querySelector('[data-user-email]');
+    const phoneEl=dialog.querySelector('[data-user-phone]');
     const avatarEl=dialog.querySelector('[data-user-avatar]');
     const initialsEl=dialog.querySelector('[data-user-initials]');
     const descEl=dialog.querySelector('[data-account-role-desc]');
 
     if(nameEl)nameEl.textContent=name;
-    if(emailEl)emailEl.textContent=email;
+    if(phoneEl){
+      phoneEl.textContent=phone?'тел: '+phone:'';
+      phoneEl.hidden=!phone;
+    }
+    if(emailEl){
+      emailEl.textContent=email?'email: '+email:'';
+      emailEl.hidden=!email;
+    }
 
     if(avatar&&avatarEl){
       avatarEl.src=avatar;

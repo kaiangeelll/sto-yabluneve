@@ -55,7 +55,21 @@ function refreshTimes(){
 
 function open(id,service=''){
   let d=$('#'+id);
-  if(id==='bookingDialog'){$('#bookingForm').hidden=false;$('.success',d).hidden=true;$('#bookingForm').reset();if(service)$('[data-service-options]').value=service;refreshTimes();}
+  if(id==='bookingDialog'){
+    $('#bookingForm').hidden=false;
+    $('.success',d).hidden=true;
+    $('#bookingForm').reset();
+    if(service)$('[data-service-options]').value=service;
+    try{
+      const u=JSON.parse(localStorage.getItem('stoUserSession')||'null');
+      if(u){
+        if(u.name&&u.role!=='admin')$('#bookingForm [name=name]').value=u.name;
+        if(u.phone)$('#bookingForm [name=phone]').value=u.phone;
+        if(u.email&&$('#bookingForm [name=email]'))$('#bookingForm [name=email]').value=u.email;
+      }
+    }catch(e){}
+    refreshTimes();
+  }
   if(id==='accountDialog'){$('.account-tabs').hidden=false;$('.account-success').hidden=true;$$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab==='login'));$$('[data-panel]').forEach(x=>x.hidden=x.dataset.panel!=='login');}
   d.showModal();
 }
