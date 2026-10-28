@@ -18,15 +18,34 @@
         guestView=dialog?dialog.querySelector('#accountGuestView'):null,
         loginForm=document.querySelector('#loginForm'),
         regForm=document.querySelector('#registerForm'),
+        forgotForm=document.querySelector('#forgotForm'),
+        resetForm=document.querySelector('#resetPassForm'),
         editForm=document.querySelector('#profileEditForm'),
         adminBox=dialog?dialog.querySelector('[data-admin-panel-btn-box]'):null,
         userTabs=dialog?dialog.querySelector('[data-user-tabs]'):null,
         loginError=dialog?dialog.querySelector('[data-login-error]'):null,
+        loginSuccess=dialog?dialog.querySelector('[data-login-success]'):null,
         regError=dialog?dialog.querySelector('[data-register-error]'):null,
+        forgotError=dialog?dialog.querySelector('[data-forgot-error]'):null,
+        resetError=dialog?dialog.querySelector('[data-reset-error]'):null,
+        resetDisplay=dialog?dialog.querySelector('[data-reset-user-display]'):null,
         tabs=dialog?dialog.querySelector('.account-tabs'):null,
         panels=dialog?dialog.querySelectorAll('[data-panel]'):[];
 
   window.currentUser=null;
+  let targetResetUser=null;
+
+  function normPhone(p){
+    return (p||'').replace(/\D/g,'');
+  }
+
+  function isPhoneMatch(p1,p2){
+    const c1=normPhone(p1);
+    const c2=normPhone(p2);
+    if(!c1||!c2||c1.length<7||c2.length<7)return false;
+    if(c1===c2)return true;
+    return c1.endsWith(c2.slice(-9))||c2.endsWith(c1.slice(-9));
+  }
 
   function renderUserBookings(user){
     const listEls=document.querySelectorAll('[data-my-bookings-list], [data-my-inline-bookings-list]'),
@@ -41,12 +60,10 @@
           uEmail=(user.email||'').toLowerCase().trim();
 
     const my=allBookings.filter(b=>{
-      const bPhone=(b.phone||'').replace(/\D/g,'');
+      const bPhone=b.phone||'';
       const bName=(b.name||'').toLowerCase().trim();
       const bNote=(b.note||'').toLowerCase();
-      if(uPhone&&bPhone&&uPhone.length>=7&&bPhone.length>=7){
-        if(bPhone===uPhone||bPhone.endsWith(uPhone.slice(-9))||uPhone.endsWith(bPhone.slice(-9)))return true;
-      }
+      if(uPhone&&isPhoneMatch(uPhone,bPhone))return true;
       if(uName&&bName&&uName.length>=3&&(bName===uName||bName.includes(uName)||uName.includes(bName)))return true;
       if(uEmail&&uEmail.length>=5&&bNote.includes(uEmail))return true;
       return false;
@@ -202,6 +219,7 @@
 
   function resetToAuth(){
     window.currentUser=null;
+    targetResetUser=null;
     localStorage.removeItem('stoUserSession');
 
     // Ховаємо кабінет на сторінці
@@ -221,7 +239,10 @@
       }
       if(adminBox)adminBox.hidden=true;
       if(loginError)loginError.hidden=true;
+      if(loginSuccess)loginSuccess.hidden=true;
       if(regError)regError.hidden=true;
+      if(forgotError)forgotError.hidden=true;
+      if(resetError)resetError.hidden=true;
     }
 
     document.querySelectorAll('[data-account-btn-text]').forEach(t=>{
@@ -236,6 +257,73 @@
       btn.title='';
     });
   }
+
+  function openForgotPanel(){
+    if(tabs){
+      tabs.querySelectorAll('[data-tab]').forEach(t=>t.classList.remove('active'));
+    }
+    panels.forEach(p=>{
+      p.hidden=p.dataset.panel!=='forgot';
+    });
+    if(loginError)loginError.hidden=true;
+    if(loginSuccess)loginSuccess.hidden=true;
+    if(forgotError)forgotError.hidden=true;
+    if(forgotForm)forgotForm.reset();
+  }
+
+  function openResetPanel(user){
+    targetResetUser=user;
+    if(resetDisplay){
+      const idLabel=user.email||user.phone||'клієнт';
+      resetDisplay.textContent=`${user.name||'Клієнт'} (${idLabel})`;
+    }
+    panels.forEach(p=>{
+      p.hidden=p.dataset.panel!=='reset';
+    });
+    if(resetError)resetError.hidden=true;
+    if(resetForm)resetForm.reset();
+  }
+
+  function backToLogin(prefillLogin='',successMsg=''){
+    panels.forEach(p=>{
+      p.hidden=p.dataset.panel!=='login';
+    });
+    if(tabs){
+      tabs.querySelectorAll('[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab==='login'));
+    }
+    if(loginError)loginError.hidden=true;
+    if(forgotError)forgotError.hidden=true;
+    if(resetError)resetError.hidden=true;
+    if(loginSuccess){
+      if(successMsg){
+        loginSuccess.textContent=successMsg;
+        loginSuccess.hidden=false;
+      }else{
+        loginSuccess.hidden=true;
+      }
+    }
+    if(loginForm&&prefillLogin){
+      loginForm.elements.login.value=prefillLogin;
+      loginForm.elements.password.value='';
+      setTimeout(()=>{
+        if(loginForm.elements.password)loginForm.elements.password.focus();
+      },50);
+    }
+  }
+
+  document.querySelectorAll('[data-open-forgot]').forEach(btn=>{
+    btn.onclick=e=>{
+      e.preventDefault();
+      openForgotPanel();
+    };
+  });
+
+  document.querySelectorAll('[data-back-to-login]').forEach(btn=>{
+    btn.onclick=e=>{
+      e.preventDefault();
+      backToLogin();
+    };
+  });
 
   // Profile tabs (Bookings vs Edit)
   dialog.querySelectorAll('[data-profile-tab]').forEach(btn=>{
@@ -510,9 +598,15 @@
   if(loginForm){
     loginForm.onsubmit=e=>{
       e.preventDefault();
+      if(loginSuccess)loginSuccess.hidden=true;
       const fd=new FormData(loginForm),
             login=String(fd.get('login')||'').trim(),
             password=String(fd.get('password')||'').trim();
+
+      if(!login||!password){
+        if(loginError){loginError.textContent='Введіть логін та пароль.';loginError.hidden=false;}
+        return;
+      }
 
       // Адміністратор СТО
       if(login.toLowerCase()==='admin'&&password==='sto-2026'){
@@ -528,7 +622,14 @@
 
       // Перевіряємо збережених користувачів
       let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
-      let user=users.find(u=>(u.phone&&u.phone===login)||(u.email&&u.email.toLowerCase()===login.toLowerCase()));
+      const cleanLogin=login.toLowerCase().trim();
+
+      let user=users.find(u=>{
+        const uEmail=(u.email||'').toLowerCase().trim();
+        if(cleanLogin&&uEmail===cleanLogin)return true;
+        if(isPhoneMatch(u.phone,login))return true;
+        return false;
+      });
 
       if(user){
         if(user.password===password){
@@ -537,24 +638,18 @@
           if(loginError)loginError.hidden=true;
           return;
         }else{
-          if(loginError){loginError.textContent='Невірний пароль.';loginError.hidden=false;}
+          if(loginError){
+            loginError.textContent='❌ Невірний пароль! Якщо ви його забули, скористайтесь «Забули пароль?» нижче.';
+            loginError.hidden=false;
+          }
           return;
         }
       }
 
-      // Якщо новий логін з паролем
-      if(login&&password.length>=4){
-        const isEmail=login.includes('@');
-        const newUser={name:isEmail?login.split('@')[0]:'Клієнт',phone:isEmail?'':login,email:isEmail?login:'',password:password,role:'customer'};
-        users.push(newUser);
-        localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
-        localStorage.setItem('stoUserSession',JSON.stringify(newUser));
-        showProfile(newUser);
-        if(loginError)loginError.hidden=true;
-        return;
+      if(loginError){
+        loginError.textContent='❌ Акаунт із такими даними не знайдено. Перевірте номер/пошту або створіть кабінет на вкладці «Створити кабінет».';
+        loginError.hidden=false;
       }
-
-      if(loginError){loginError.textContent='Введіть вірний логін та пароль.';loginError.hidden=false;}
     };
   }
 
@@ -573,14 +668,149 @@
         return;
       }
 
-      const newUser={name:name||'Клієнт',phone:phone,email:email,password:password,role:'customer'};
+      if(!password||password.length<4){
+        if(regError){regError.textContent='Пароль має містити щонайменше 4 символи!';regError.hidden=false;}
+        return;
+      }
+
       let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
+
+      // 1. Перевірка на вже зареєстрований номер телефону
+      const cleanPhone=normPhone(phone);
+      if(cleanPhone.length>=9){
+        const existByPhone=users.find(u=>isPhoneMatch(u.phone,phone));
+        if(existByPhone){
+          if(regError){
+            regError.textContent='❌ На цей номер телефону вже зареєстровано акаунт! Будь ласка, увійдіть або скористайтесь «Забули пароль?».';
+            regError.hidden=false;
+          }
+          return;
+        }
+      }
+
+      // 2. Перевірка на вже зареєстрований Email
+      const cleanEmail=email.toLowerCase().trim();
+      if(cleanEmail.length>3){
+        const existByEmail=users.find(u=>(u.email||'').toLowerCase().trim()===cleanEmail);
+        if(existByEmail){
+          if(regError){
+            regError.textContent='❌ На цю пошту вже зареєстровано акаунт! Будь ласка, увійдіть або скористайтесь «Забули пароль?».';
+            regError.hidden=false;
+          }
+          return;
+        }
+      }
+
+      const newUser={name:name||'Клієнт',phone:phone,email:email,password:password,role:'customer'};
       users.push(newUser);
       localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
       localStorage.setItem('stoUserSession',JSON.stringify(newUser));
 
       if(regError)regError.hidden=true;
       showProfile(newUser);
+    };
+  }
+
+  // Forgot password request handler
+  if(forgotForm){
+    forgotForm.onsubmit=e=>{
+      e.preventDefault();
+      const fd=new FormData(forgotForm),
+            target=String(fd.get('recoveryTarget')||'').trim();
+
+      if(!target){
+        if(forgotError){forgotError.textContent='Вкажіть номер телефону або Email!';forgotError.hidden=false;}
+        return;
+      }
+
+      let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
+      const cleanTarget=target.toLowerCase().trim();
+
+      let foundUser=users.find(u=>{
+        const uEmail=(u.email||'').toLowerCase().trim();
+        if(cleanTarget&&uEmail===cleanTarget)return true;
+        if(isPhoneMatch(u.phone,target))return true;
+        return false;
+      });
+
+      // Перевіряємо також збережені записи
+      if(!foundUser){
+        let allBookings=[];
+        try{allBookings=JSON.parse(localStorage.getItem('stoBookings')||'[]');}catch(err){}
+        const bk=allBookings.find(b=>isPhoneMatch(b.phone,target)||((b.note||'').toLowerCase().includes(cleanTarget)));
+        if(bk){
+          foundUser={
+            name:bk.name||'Клієнт',
+            phone:bk.phone||target,
+            email:target.includes('@')?target:'',
+            password:'',
+            role:'customer'
+          };
+          users.push(foundUser);
+          localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
+        }
+      }
+
+      if(!foundUser){
+        if(forgotError){
+          forgotError.textContent='❌ Акаунт із цим номером або Email не знайдено. Перевірте ввід або створіть новий кабінет.';
+          forgotError.hidden=false;
+        }
+        return;
+      }
+
+      if(forgotError)forgotError.hidden=true;
+      openResetPanel(foundUser);
+    };
+  }
+
+  // Reset password handler
+  if(resetForm){
+    resetForm.onsubmit=e=>{
+      e.preventDefault();
+      if(!targetResetUser){
+        backToLogin();
+        return;
+      }
+
+      const fd=new FormData(resetForm),
+            newPass=String(fd.get('newPassword')||'').trim(),
+            confPass=String(fd.get('confirmPassword')||'').trim();
+
+      if(!newPass||newPass.length<4){
+        if(resetError){
+          resetError.textContent='❌ Пароль має містити щонайменше 4 символи!';
+          resetError.hidden=false;
+        }
+        return;
+      }
+
+      if(newPass!==confPass){
+        if(resetError){
+          resetError.textContent='❌ Паролі не співпадають! Перевірте правильність введення.';
+          resetError.hidden=false;
+        }
+        return;
+      }
+
+      let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
+      const idx=users.findIndex(u=>{
+        if(targetResetUser.phone&&isPhoneMatch(u.phone,targetResetUser.phone))return true;
+        if(targetResetUser.email&&(u.email||'').toLowerCase()===(targetResetUser.email||'').toLowerCase())return true;
+        return false;
+      });
+
+      if(idx>=0){
+        users[idx].password=newPass;
+      }else{
+        targetResetUser.password=newPass;
+        users.push(targetResetUser);
+      }
+      localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
+
+      const prefill=targetResetUser.phone||targetResetUser.email||'';
+      targetResetUser=null;
+      backToLogin(prefill,'✅ Пароль успішно змінено! Тепер ви можете увійти з новим паролем.');
     };
   }
 

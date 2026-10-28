@@ -1,7 +1,36 @@
 [hidden]{display:none !important;}
 #accountUserView[hidden],#accountGuestView[hidden],.profile-panel[hidden]{display:none !important;}
 
-.login-error{margin:0;color:#a44b2b;background:#f8e5de;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:700}
+.login-error{margin:0 0 10px;color:#a44b2b;background:#f8e5de;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:700;line-height:1.4;}
+
+.login-success{
+  margin:0 0 12px;
+  color:#1e5a26;
+  background:#e2f4e3;
+  border:1px solid #b6e2b8;
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.4;
+}
+
+.forgot-link-btn,
+.back-link-btn{
+  background:none;
+  border:none;
+  color:#276d33;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  padding:4px 6px;
+  text-decoration:underline;
+  transition:all 0.15s ease;
+}
+.forgot-link-btn:hover,
+.back-link-btn:hover{
+  color:#112614;
+}
 
 .oauth-divider{
   display:flex;
