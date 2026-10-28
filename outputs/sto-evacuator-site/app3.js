@@ -1,6 +1,10 @@
 const catalog=[['Встановлення та ремонт автокондиціонерів','Діагностика, заправка та ремонт систем кондиціювання','від 600 ₴'],['Гальмівні системи','Перевірка, ремонт і заміна компонентів гальмівної системи','від 500 ₴'],['Діагностика двигуна','Комп’ютерна та механічна діагностика двигуна','від 400 ₴'],['Автоелектрика','Пошук несправностей, проводка, стартер і генератор','від 400 ₴'],['Заміна оливи','Заміна оливи, фільтрів і технічних рідин','від 500 ₴'],['Ремонт кондиціонерів','Ремонт компресора, трубок, радіатора та витоків','від 700 ₴'],['Ремонт двигунів','Діагностика та ремонт двигуна будь-якої складності','від 1 500 ₴'],['Ремонт електрообладнання','Ремонт вузлів і електронних компонентів авто','від 500 ₴'],['Кермове керування та підвіска','Ремонт рульової системи, ходової та підвіски','від 500 ₴'],['Ремонт коробок передач','Діагностика, обслуговування та ремонт КПП','від 1 500 ₴']];
-const base={schema:3,name:'СТО Евакуатор',adminEmail:'',phone:'+380 68 067 9909',address:'вул. Яблунева, 20, Нове, Київська область, 08150',hours:'Щодня · 09:00–19:00',map:'https://maps.app.goo.gl/B1xcUJHgVeRC3Avm7',whatsapp:'',viber:'',telegram:'',closedDates:'',closedSlots:'',services:catalog};
-let data=JSON.parse(localStorage.getItem('stoData')||'null')||base;if(data.schema!==3){data=base;localStorage.setItem('stoData',JSON.stringify(data));}
+const base={schema:3,name:'СТО Евакуатор',adminEmail:'',phone:'+380 68 067 9909',address:'вул. Яблунева, 20, Нове, Київська область, 08150',hours:'Пн–Пт: 09:00–19:00 · Сб: 09:00–15:00 · Нд: Вихідний',map:'https://maps.app.goo.gl/B1xcUJHgVeRC3Avm7',whatsapp:'',viber:'',telegram:'',closedDates:'',closedSlots:'',services:catalog};
+let data=JSON.parse(localStorage.getItem('stoData')||'null')||base;
+if(data.schema!==3||data.hours==='Щодня · 09:00–19:00'||!data.hours.includes('Сб:')){
+  data.hours='Пн–Пт: 09:00–19:00 · Сб: 09:00–15:00 · Нд: Вихідний';
+  localStorage.setItem('stoData',JSON.stringify(data));
+}
 let bookings=JSON.parse(localStorage.getItem('stoBookings')||'[]'),reviews=JSON.parse(localStorage.getItem('stoReviews')||'null')||[{name:'Клієнт Google Maps',rating:5,text:'Якісне та індивідуальне обслуговування. Рекомендую майстра.',date:'Відгук із Google Maps'},{name:'Клієнт Google Maps',rating:5,text:'Несправність усунули якісно й швидко. Тепер звертаюся сюди з усіх питань авто.',date:'Відгук із Google Maps'}];
 
 const SUPABASE_URL='https://nabwuaxzogfuzaznvmph.supabase.co';
@@ -32,6 +36,79 @@ function linkFor(kind,digits){
   return v;
 }
 
+function getKyivNow(){
+  try{
+    const str=new Date().toLocaleString('en-US',{timeZone:'Europe/Kyiv'});
+    return new Date(str);
+  }catch(e){
+    const d=new Date();
+    const utc=d.getTime()+(d.getTimezoneOffset()*60000);
+    return new Date(utc+(3*3600000));
+  }
+}
+
+function updateHeroStatus(){
+  const now=getKyivNow();
+  const day=now.getDay(); // 0 = Неділя, 1..5 = Будні, 6 = Субота
+  const hours=now.getHours();
+  const mins=now.getMinutes();
+  const totalMins=hours*60+mins;
+
+  const card=$('[data-hero-status-card]');
+  const badgeEl=$('[data-status-badge]');
+  const detailEl=$('[data-status-detail]');
+  const dotEl=$('[data-status-dot]');
+
+  let isOpen=false;
+  let badgeText='Зараз зачинено';
+  let detailText='';
+
+  if(day===0){
+    // Неділя: Закрито
+    isOpen=false;
+    badgeText='Зараз зачинено';
+    detailText='Неділя — вихідний день · Відкриємося в понеділок о 09:00';
+  }else if(day===6){
+    // Субота: 09:00 - 15:00 (540..900)
+    if(totalMins>=540 && totalMins<900){
+      isOpen=true;
+      badgeText='Зараз працюємо';
+      detailText='Сьогодні (субота) відчинено до 15:00';
+    }else if(totalMins<540){
+      isOpen=false;
+      badgeText='Зараз зачинено';
+      detailText='Відкриємося сьогодні (субота) о 09:00 (до 15:00)';
+    }else{
+      isOpen=false;
+      badgeText='Зараз зачинено';
+      detailText='Робочий день завершено · Відкриємося в понеділок о 09:00';
+    }
+  }else{
+    // Будні: 09:00 - 19:00 (540..1140)
+    if(totalMins>=540 && totalMins<1140){
+      isOpen=true;
+      badgeText='Зараз працюємо';
+      detailText='Сьогодні відчинено до 19:00';
+    }else if(totalMins<540){
+      isOpen=false;
+      badgeText='Зараз зачинено';
+      detailText='Відкриємося сьогодні о 09:00 (до 19:00)';
+    }else{
+      isOpen=false;
+      badgeText='Зараз зачинено';
+      const nextDay=day===5?'завтра (субота) о 09:00 (до 15:00)':'завтра о 09:00';
+      detailText=`Робочий день завершено · Відкриємося ${nextDay}`;
+    }
+  }
+
+  if(badgeEl)badgeEl.textContent=badgeText;
+  if(detailEl)detailEl.textContent=detailText;
+  if(dotEl){
+    dotEl.classList.toggle('is-closed',!isOpen);
+    dotEl.classList.toggle('is-open',isOpen);
+  }
+}
+
 function render(){
   let digits=data.phone.replace(/\D/g,'');
   document.title=`${data.name} — ремонт авто в Новому`;
@@ -51,9 +128,15 @@ function render(){
   $$('[data-service]').forEach(el=>{let act=()=>open('bookingDialog',data.services[+el.dataset.service][0]);el.onclick=act;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')act()}});
   $('[data-reviews]').innerHTML=reviews.slice().reverse().map(r=>`<article class="review-card"><header><div><strong>${esc(r.name)}</strong><span class="stars">${stars(r.rating)}</span></div><time>${esc(r.date)}</time></header><p>${esc(r.text)}</p></article>`).join('');
   renderBookings();
+  updateHeroStatus();
 }
 
 function unavailable(date,time){
+  if(!date)return '';
+  const d=new Date(date+'T12:00:00');
+  const day=d.getDay();
+  if(day===0)return 'У неділю автосервіс зачинений (вихідний).';
+  if(day===6&&time>'14:00')return 'У суботу автосервіс працює до 15:00.';
   if(split(data.closedDates).includes(date))return 'Цей день зачинений адміністратором.';
   if(split(data.closedSlots).includes(`${date} ${time}`))return 'Цей час недоступний.';
   if(bookings.some(b=>b.date===date&&b.time===time&&status(b)==='Нова'))return 'Цей час уже зайнятий.';
@@ -63,12 +146,27 @@ function unavailable(date,time){
 function refreshTimes(){
   let date=$('#bookingForm [name=date]').value,select=$('[data-time-options]'),note=$('[data-availability]'),submit=$('#bookingForm [type=submit]');
   if(!date){select.innerHTML='<option value="">Спочатку оберіть дату</option>';select.disabled=true;note.textContent='Оберіть дату, щоб побачити вільний час.';submit.disabled=true;return;}
-  let closed=split(data.closedDates).includes(date);
+
+  const d=new Date(date+'T12:00:00');
+  const day=d.getDay();
+  if(day===0){
+    select.innerHTML='<option value="">Неділя — вихідний</option>';
+    select.disabled=true;
+    submit.disabled=true;
+    note.textContent='У неділю автосервіс не працює (вихідний). Оберіть будній день або суботу.';
+    return;
+  }
+
   let times=['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00'];
+  if(day===6){
+    times=['09:00','10:00','11:00','12:00','13:00','14:00']; // Субота до 15:00
+  }
+
+  let closed=split(data.closedDates).includes(date);
   let free=times.filter(t=>!unavailable(date,t));
   select.innerHTML=free.length?free.map(t=>`<option>${t}</option>`).join(''):'<option value="">Вільного часу немає</option>';
   select.disabled=!free.length;submit.disabled=!free.length;
-  note.textContent=closed?'На цю дату запис недоступний — сервіс зачинений.':free.length?`Доступно ${free.length} вільн. слотів. Зайнятий час не показується.`:'На цю дату немає вільного часу. Оберіть інший день.';
+  note.textContent=closed?'На цю дату запис недоступний — сервіс зачинений.':free.length?`Доступно ${free.length} вільн. слотів.${day===6?' (Субота до 15:00)':''}`:'На цю дату немає вільного часу. Оберіть інший день.';
 }
 
 function open(id,service=''){
@@ -508,6 +606,7 @@ syncWithCloud();
 
 window.addEventListener('focus', syncWithCloud);
 setInterval(syncWithCloud, 20000);
+setInterval(updateHeroStatus, 60000);
 
 const prevCalBtn=$('[data-admin-cal-prev]');
 if(prevCalBtn)prevCalBtn.onclick=()=>{adminCalDate.setMonth(adminCalDate.getMonth()-1);renderAdminCal();};

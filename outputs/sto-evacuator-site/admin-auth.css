@@ -353,6 +353,39 @@
 }
 
 /* ============================================================
+   HEADER ACCOUNT BUTTON (WITH PROFILE ICON)
+   ============================================================ */
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #eef5e7;
+  color: #19381c;
+  border: 1px solid #cce0cd;
+  padding: 10px 16px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+.account-btn:hover {
+  background: #d6ff4a;
+  border-color: #b9e02c;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(186, 226, 44, 0.4);
+}
+.account-btn.is-admin {
+  background: #d6ff4a;
+  border-color: #badb37;
+  color: #122a08;
+}
+.account-btn svg {
+  display: block;
+}
+
+/* ============================================================
    WIDESCREEN ADMIN DASHBOARD
    ============================================================ */
 .admin-dashboard-dialog {

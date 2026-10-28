@@ -135,8 +135,12 @@
 
     // Оновлюємо кнопки в шапці
     const firstName=name.split(' ')[0]||'Клієнт';
+    document.querySelectorAll('[data-account-btn-text]').forEach(t=>{
+      t.textContent=isAdmin?'Панель керування':`Кабінет (${firstName})`;
+    });
     document.querySelectorAll('[data-open-account]').forEach(btn=>{
-      btn.textContent=isAdmin?'Панель керування':`Кабінет (${firstName})`;
+      btn.title=isAdmin?'Панель керування':'Особистий кабінет';
+      btn.classList.toggle('is-admin',isAdmin);
     });
 
     document.querySelectorAll('[data-open-booking]').forEach(btn=>{
@@ -169,8 +173,12 @@
     if(loginError)loginError.hidden=true;
     if(regError)regError.hidden=true;
 
+    document.querySelectorAll('[data-account-btn-text]').forEach(t=>{
+      t.textContent='Кабінет';
+    });
     document.querySelectorAll('[data-open-account]').forEach(btn=>{
-      btn.textContent='Кабінет';
+      btn.title='Особистий кабінет';
+      btn.classList.remove('is-admin');
     });
     document.querySelectorAll('[data-open-booking]').forEach(btn=>{
       btn.removeAttribute('data-admin-active');
