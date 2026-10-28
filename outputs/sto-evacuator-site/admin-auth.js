@@ -125,20 +125,28 @@
     }
   }
 
+  const IGNORED_TEST_IDS=['5e6377e6-276b-431a-8358-caa628ee17b3','9497c1e7-2cfa-4de6-87fc-a897c03359a1','56e56666-3934-44dd-89d7-d6563a293929'];
+
   function renderUserBookings(user){
     const listEls=document.querySelectorAll('[data-my-bookings-list], [data-my-inline-bookings-list]'),
           countEls=document.querySelectorAll('[data-my-count], [data-user-active-count]');
     if(!listEls.length)return;
 
     let allBookings=[];
-    try{allBookings=JSON.parse(localStorage.getItem('stoBookings')||'[]');}catch(e){}
+    try{
+      let stored=JSON.parse(localStorage.getItem('stoBookings')||'[]');
+      allBookings=stored.filter(b=>!IGNORED_TEST_IDS.includes(String(b.id))&&b.status!=='deleted');
+      if(allBookings.length!==stored.length){
+        localStorage.setItem('stoBookings',JSON.stringify(allBookings));
+      }
+    }catch(e){}
 
     const uPhone=(user.phone||'').replace(/\D/g,''),
           uName=(user.name||'').toLowerCase().trim(),
           uEmail=(user.email||'').toLowerCase().trim();
 
     const my=allBookings.filter(b=>{
-      if(b.status==='archived'||b.status==='deleted')return false;
+      if(IGNORED_TEST_IDS.includes(String(b.id))||b.status==='archived'||b.status==='deleted')return false;
       const bPhone=b.phone||'';
       const bName=(b.name||'').toLowerCase().trim();
       const bNote=(b.note||'').toLowerCase();

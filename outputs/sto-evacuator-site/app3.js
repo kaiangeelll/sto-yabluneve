@@ -461,7 +461,19 @@ function renderAdminReviews(){
   });
 }
 
-const IGNORED_TEST_IDS=['5e6377e6-276b-431a-8358-caa628ee17b3','9497c1e7-2cfa-4de6-87fc-a897c03359a1'];
+const IGNORED_TEST_IDS=['5e6377e6-276b-431a-8358-caa628ee17b3','9497c1e7-2cfa-4de6-87fc-a897c03359a1','56e56666-3934-44dd-89d7-d6563a293929'];
+
+function cleanStoredBookings(){
+  try{
+    let list=JSON.parse(localStorage.getItem('stoBookings')||'[]');
+    let cleaned=list.filter(b=>!IGNORED_TEST_IDS.includes(String(b.id))&&b.status!=='deleted');
+    if(cleaned.length!==list.length){
+      localStorage.setItem('stoBookings',JSON.stringify(cleaned));
+      bookings=cleaned;
+    }
+  }catch(e){}
+}
+cleanStoredBookings();
 
 function renderBookings(){
   let t=$('[data-bookings]');if(!t)return;
