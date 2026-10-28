@@ -8,6 +8,8 @@
   }
 
   const dialog=document.querySelector('#accountDialog'),
+        userView=dialog?dialog.querySelector('#accountUserView'):null,
+        guestView=dialog?dialog.querySelector('#accountGuestView'):null,
         loginForm=document.querySelector('#loginForm'),
         regForm=document.querySelector('#registerForm'),
         editForm=document.querySelector('#profileEditForm'),
@@ -15,7 +17,6 @@
         userTabs=dialog?dialog.querySelector('[data-user-tabs]'):null,
         loginError=dialog?dialog.querySelector('[data-login-error]'):null,
         regError=dialog?dialog.querySelector('[data-register-error]'):null,
-        userBox=dialog?dialog.querySelector('[data-user-profile]'):null,
         tabs=dialog?dialog.querySelector('.account-tabs'):null,
         panels=dialog?dialog.querySelectorAll('[data-panel]'):[];
 
@@ -68,14 +69,11 @@
   }
 
   function showProfile(user){
-    if(!dialog||!userBox)return;
+    if(!dialog)return;
     window.currentUser=user;
 
-    const oldSuccess=dialog.querySelector('.account-success');
-    if(oldSuccess)oldSuccess.hidden=true;
-    if(tabs)tabs.hidden=true;
-    panels.forEach(p=>p.hidden=true);
-    userBox.hidden=false;
+    if(guestView)guestView.hidden=true;
+    if(userView)userView.hidden=false;
 
     const name=user.name||user.user_metadata?.full_name||user.user_metadata?.name||user.email||user.phone||'Клієнт';
     const email=user.email||'';
@@ -132,9 +130,9 @@
   function resetToAuth(){
     if(!dialog)return;
     window.currentUser=null;
-    const oldSuccess=dialog.querySelector('.account-success');
-    if(oldSuccess)oldSuccess.hidden=true;
-    if(userBox)userBox.hidden=true;
+    if(userView)userView.hidden=true;
+    if(guestView)guestView.hidden=false;
+
     if(tabs)tabs.hidden=false;
     panels.forEach(p=>{
       p.hidden=p.dataset.panel!=='login';

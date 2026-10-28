@@ -76,8 +76,8 @@ function open(id,service=''){
     if(u&&window.showUserProfile){
       window.showUserProfile(u);
     }else{
-      $('.account-tabs').hidden=false;
-      const prof=$('[data-user-profile]');if(prof)prof.hidden=true;
+      const uv=$('#accountUserView');if(uv)uv.hidden=true;
+      const gv=$('#accountGuestView');if(gv)gv.hidden=false;
       $$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab==='login'));
       $$('[data-panel]').forEach(x=>x.hidden=x.dataset.panel!=='login');
     }
