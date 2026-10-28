@@ -686,6 +686,26 @@
     };
   });
 
+  // Кнопка перемикання видимості пароля (очко)
+  document.querySelectorAll('.password-toggle-btn').forEach(btn=>{
+    btn.onclick=e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const wrap=btn.closest('.password-field-wrapper');
+      if(!wrap)return;
+      const inp=wrap.querySelector('input');
+      if(!inp)return;
+      const isPass=inp.type==='password';
+      inp.type=isPass?'text':'password';
+      const showSpan=btn.querySelector('.eye-show');
+      const hideSpan=btn.querySelector('.eye-hide');
+      if(showSpan)showSpan.style.display=isPass?'none':'inline-block';
+      if(hideSpan)hideSpan.style.display=isPass?'inline-block':'none';
+      btn.title=isPass?'Приховати пароль':'Показати пароль';
+      btn.setAttribute('aria-label',btn.title);
+    };
+  });
+
   // Profile tabs (Bookings vs Edit)
   dialog.querySelectorAll('[data-profile-tab]').forEach(btn=>{
     btn.onclick=()=>{

@@ -48,10 +48,16 @@
     if(!digits.length)return '';
 
     if(country.code==='UA'){
-      // Якщо ввели +380 або 380
-      if(digits.startsWith('380'))digits=digits.slice(3);
+      // Якщо ввели +380 або 380 на початку
+      if(digits.startsWith('380')){
+        digits=digits.slice(3);
+        if(!digits.length)return '(';
+      }
       // Якщо ввели перший 0 (наприклад 091...), прибираємо його
-      else if(digits.startsWith('0'))digits=digits.slice(1);
+      if(digits.startsWith('0')){
+        if(digits.length===1)return '(';
+        digits=digits.slice(1);
+      }
       digits=digits.slice(0,9);
       if(!digits.length)return '';
 
@@ -104,7 +110,8 @@
       if(!localInput||!hiddenInput)return;
       const formatted=formatPhoneLocal(localInput.value,currentCountry);
       localInput.value=formatted;
-      if(formatted){
+      const cleanDigits=formatted.replace(/\D/g,'');
+      if(cleanDigits.length>=4){
         hiddenInput.value=`${currentCountry.dial} ${formatted}`;
       }else{
         hiddenInput.value='';
@@ -206,6 +213,17 @@
     }
 
     if(localInput){
+      localInput.addEventListener('focus',()=>{
+        if(!localInput.value && currentCountry.code==='UA'){
+          localInput.value='(';
+        }
+      });
+      localInput.addEventListener('blur',()=>{
+        if(localInput.value==='('){
+          localInput.value='';
+          syncValue();
+        }
+      });
       localInput.addEventListener('input',syncValue);
       localInput.addEventListener('paste',()=>{
         setTimeout(syncValue,20);
