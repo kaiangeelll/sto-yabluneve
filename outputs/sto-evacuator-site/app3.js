@@ -144,6 +144,7 @@ $('#bookingForm').onsubmit=async e=>{
       bTime=f.get('time'),
       bName=f.get('name'),
       bPhone=f.get('phone'),
+      bEmail=f.get('email')?String(f.get('email')).trim():'',
       bService=f.get('service'),
       bNote=f.get('note');
 
@@ -152,6 +153,9 @@ $('#bookingForm').onsubmit=async e=>{
 
   const submitBtn=$('#bookingForm [type=submit]');
   if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Надсилаємо...';}
+
+  let fullNote=bNote||'';
+  if(bEmail){fullNote=fullNote?`${fullNote} · Пошта: ${bEmail}`:`Пошта: ${bEmail}`;}
 
   let createdId=Date.now();
   const res=await sbFetch('bookings',{
@@ -163,7 +167,7 @@ $('#bookingForm').onsubmit=async e=>{
       service_name:bService,
       booking_date:bDate,
       booking_time:bTime,
-      note:bNote,
+      note:fullNote,
       status:'pending'
     })
   });

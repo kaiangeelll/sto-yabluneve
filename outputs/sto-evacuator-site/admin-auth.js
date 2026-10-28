@@ -7,12 +7,12 @@
     sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   }
 
-  const ADMIN_EMAILS=[];
-
   const dialog=document.querySelector('#accountDialog'),
-        form=document.querySelector('#loginForm'),
+        loginForm=document.querySelector('#loginForm'),
+        regForm=document.querySelector('#registerForm'),
         adminButtons=document.querySelectorAll('[data-open-admin]'),
-        error=dialog?dialog.querySelector('[data-login-error]'):null,
+        loginError=dialog?dialog.querySelector('[data-login-error]'):null,
+        regError=dialog?dialog.querySelector('[data-register-error]'):null,
         userBox=dialog?dialog.querySelector('[data-user-profile]'):null,
         tabs=dialog?dialog.querySelector('.account-tabs'):null,
         panels=dialog?dialog.querySelectorAll('[data-panel]'):[];
@@ -23,8 +23,8 @@
     panels.forEach(p=>p.hidden=true);
     userBox.hidden=false;
 
-    const name=user.user_metadata?.full_name||user.user_metadata?.name||user.email?.split('@')[0]||'Користувач';
-    const email=user.email||'';
+    const name=user.name||user.user_metadata?.full_name||user.user_metadata?.name||user.email||user.phone||'Клієнт';
+    const email=user.email||user.phone||'';
     const avatar=user.user_metadata?.avatar_url||user.user_metadata?.picture;
 
     const nameEl=dialog.querySelector('[data-user-name]');
@@ -41,15 +41,15 @@
       avatarEl.hidden=false;
       if(initialsEl)initialsEl.hidden=true;
     }else if(initialsEl){
-      initialsEl.textContent=(name[0]||'U').toUpperCase();
+      initialsEl.textContent=(name[0]||'К').toUpperCase();
       initialsEl.hidden=false;
       if(avatarEl)avatarEl.hidden=true;
     }
 
-    const isAdmin=ADMIN_EMAILS.includes((email||'').toLowerCase())||user.role==='admin'||user.is_admin===true;
+    const isAdmin=user.role==='admin'||user.is_admin===true;
     adminButtons.forEach(b=>b.hidden=!isAdmin);
     if(descEl){
-      descEl.textContent=isAdmin?'Ви увійшли як Адміністратор сервісу. Доступне повне керування сайтом.':'Ви авторизовані як клієнт. Ваші записи та історія зберігаються.';
+      descEl.textContent=isAdmin?'Ви увійшли як Адміністратор сервісу. Доступне повне керування сайтом.':'Ви авторизовані як клієнт. Ваші авто та записи збережено.';
     }
   }
 
@@ -64,28 +64,34 @@
       tabs.querySelectorAll('[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab==='login'));
     }
     adminButtons.forEach(b=>b.hidden=true);
-    if(error)error.hidden=true;
+    if(loginError)loginError.hidden=true;
+    if(regError)regError.hidden=true;
   }
 
   // Google OAuth
   document.querySelectorAll('[data-google-login]').forEach(btn=>{
     btn.onclick=async ()=>{
       if(!sb){
-        alert('Supabase Auth клієнт ще завантажується...');
+        alert('Клієнт завантажується...');
         return;
       }
       btn.disabled=true;
       btn.textContent='Перенаправлення на Google...';
-      const {error:authErr}=await sb.auth.signInWithOAuth({
-        provider:'google',
-        options:{
-          redirectTo:window.location.origin+window.location.pathname
+      try{
+        const {error:authErr}=await sb.auth.signInWithOAuth({
+          provider:'google',
+          options:{
+            redirectTo:window.location.origin+window.location.pathname
+          }
+        });
+        if(authErr){
+          alert('Вхід через Google зараз налаштовується в Google Cloud. Будь ласка, увійдіть за номером або поштою нижче!');
+          btn.disabled=false;
+          btn.innerHTML='<svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707 0-.59.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>Увійти через Google';
         }
-      });
-      if(authErr){
-        alert('Помилка авторизації через Google: '+authErr.message);
+      }catch(err){
+        alert('Вхід через Google зараз налаштовується в Google Cloud. Будь ласка, скористайтеся входом за телефоном або email нижче!');
         btn.disabled=false;
-        btn.innerHTML='Увійти через Google';
       }
     };
   });
@@ -94,7 +100,7 @@
   const logoutBtn=dialog?dialog.querySelector('[data-logout]'):null;
   if(logoutBtn){
     logoutBtn.onclick=async ()=>{
-      if(sb)await sb.auth.signOut();
+      if(sb)try{await sb.auth.signOut();}catch(e){}
       localStorage.removeItem('stoUserSession');
       resetToAuth();
     };
@@ -103,11 +109,13 @@
   // Check existing session
   async function checkSession(){
     if(sb){
-      const {data:{session}}=await sb.auth.getSession();
-      if(session?.user){
-        showProfile(session.user);
-        return;
-      }
+      try{
+        const {data:{session}}=await sb.auth.getSession();
+        if(session?.user){
+          showProfile(session.user);
+          return;
+        }
+      }catch(e){}
     }
     const local=localStorage.getItem('stoUserSession');
     if(local){
@@ -115,31 +123,77 @@
     }
   }
 
-  // Fallback demo login form
-  if(form){
-    form.onsubmit=e=>{
+  // Login handler
+  if(loginForm){
+    loginForm.onsubmit=e=>{
       e.preventDefault();
-      const fd=new FormData(form),
-            login=String(fd.get('phone')).trim().toLowerCase(),
-            password=String(fd.get('password'));
+      const fd=new FormData(loginForm),
+            login=String(fd.get('login')||'').trim(),
+            password=String(fd.get('password')||'').trim();
 
-      if(login==='admin'&&password==='sto-2026'){
-        const admUser={email:'admin@sto-yabluneve.ua',user_metadata:{full_name:'Адміністратор СТО'},role:'admin',is_admin:true};
+      // Адміністратор СТО
+      if(login.toLowerCase()==='admin'&&password==='sto-2026'){
+        const admUser={name:'Адміністратор СТО',email:'admin@sto-yabluneve.ua',role:'admin',is_admin:true};
         localStorage.setItem('stoUserSession',JSON.stringify(admUser));
         showProfile(admUser);
-        if(error)error.hidden=true;
+        if(loginError)loginError.hidden=true;
         return;
       }
 
-      if(login){
-        const clientUser={email:login,user_metadata:{full_name:login},role:'customer'};
-        localStorage.setItem('stoUserSession',JSON.stringify(clientUser));
-        showProfile(clientUser);
-        if(error)error.hidden=true;
+      // Перевіряємо збережених користувачів
+      let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
+      let user=users.find(u=>(u.phone&&u.phone===login)||(u.email&&u.email.toLowerCase()===login.toLowerCase()));
+
+      if(user){
+        if(user.password===password){
+          localStorage.setItem('stoUserSession',JSON.stringify(user));
+          showProfile(user);
+          if(loginError)loginError.hidden=true;
+          return;
+        }else{
+          if(loginError){loginError.textContent='Невірний пароль.';loginError.hidden=false;}
+          return;
+        }
+      }
+
+      // Якщо користувач ще не створив пароль, але ввів логін
+      if(login&&password.length>=4){
+        const newUser={name:login.split('@')[0],phone:login.includes('@')?'':login,email:login.includes('@')?login:'',password:password,role:'customer'};
+        users.push(newUser);
+        localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
+        localStorage.setItem('stoUserSession',JSON.stringify(newUser));
+        showProfile(newUser);
+        if(loginError)loginError.hidden=true;
         return;
       }
 
-      if(error)error.hidden=false;
+      if(loginError){loginError.textContent='Введіть вірний логін та пароль.';loginError.hidden=false;}
+    };
+  }
+
+  // Registration handler
+  if(regForm){
+    regForm.onsubmit=e=>{
+      e.preventDefault();
+      const fd=new FormData(regForm),
+            name=String(fd.get('name')||'').trim(),
+            phone=String(fd.get('phone')||'').trim(),
+            email=String(fd.get('email')||'').trim(),
+            password=String(fd.get('password')||'').trim();
+
+      if(!phone&&!email){
+        if(regError){regError.textContent='Вкажіть хоча б номер телефону або Email!';regError.hidden=false;}
+        return;
+      }
+
+      const newUser={name:name||'Клієнт',phone:phone,email:email,password:password,role:'customer'};
+      let users=JSON.parse(localStorage.getItem('stoRegisteredUsers')||'[]');
+      users.push(newUser);
+      localStorage.setItem('stoRegisteredUsers',JSON.stringify(users));
+      localStorage.setItem('stoUserSession',JSON.stringify(newUser));
+
+      if(regError)regError.hidden=true;
+      showProfile(newUser);
     };
   }
 
