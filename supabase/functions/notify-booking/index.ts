@@ -112,7 +112,7 @@ serve(async (req) => {
             <p><strong>Послуга:</strong> ${serviceName}</p>
             <p><strong>Дата та час:</strong> 📅 ${b.booking_date} о ${b.booking_time}</p>
             ${b.note ? `<p><strong>Примітка:</strong> ${b.note}</p>` : ""}
-            <p><a href="https://kaiangeelll.github.io/sto-yabluneve/?action=admin" style="background:#1b6321;color:#fff;padding:10px 20px;text-decoration:none;border-radius:8px;display:inline-block;margin-top:10px;">Відкрити в кабінеті СТО →</a></p>
+            <p><a href="https://kaiangeelll.github.io/sto-kyiv/?action=admin" style="background:#1b6321;color:#fff;padding:10px 20px;text-decoration:none;border-radius:8px;display:inline-block;margin-top:10px;">Відкрити в кабінеті СТО →</a></p>
           </div>`
         );
       }
@@ -163,7 +163,7 @@ serve(async (req) => {
               <p>📅 <strong>Поточний час:</strong> ${b.booking_date} о ${b.booking_time}</p>
               <p>➡️ <strong>Бажаний новий час:</strong> <b style="color:#1b6321;">${reschedDate}</b></p>
               ${reschedReason ? `<p><strong>Причина:</strong> ${reschedReason}</p>` : ""}
-              <p><a href="https://kaiangeelll.github.io/sto-yabluneve/?action=admin" style="background:#1b6321;color:#fff;padding:10px 20px;text-decoration:none;border-radius:8px;display:inline-block;">Перейти до погодження в кабінет →</a></p>
+              <p><a href="https://kaiangeelll.github.io/sto-kyiv/?action=admin" style="background:#1b6321;color:#fff;padding:10px 20px;text-decoration:none;border-radius:8px;display:inline-block;">Перейти до погодження в кабінет →</a></p>
             </div>`
           );
         }

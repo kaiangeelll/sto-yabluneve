@@ -17,7 +17,7 @@ declare
   resend_key text := 'YOUR_RESEND_API_KEY'; -- Ключ із resend.com
   admin_email text := 'YOUR_ADMIN_EMAIL';    -- Email адміністратора СТО
   cust_email text := null;
-  site_url text := 'https://kaiangeelll.github.io/sto-yabluneve/?action=admin';
+  site_url text := 'https://kaiangeelll.github.io/sto-kyiv/?action=admin';
   admin_html text;
   cust_html text;
 begin
@@ -119,7 +119,7 @@ returns trigger as $$
 declare
   resend_key text := 'YOUR_RESEND_API_KEY';
   admin_email text := 'YOUR_ADMIN_EMAIL';
-  site_url text := 'https://kaiangeelll.github.io/sto-yabluneve/?action=admin';
+  site_url text := 'https://kaiangeelll.github.io/sto-kyiv/?action=admin';
   cust_email text := null;
   resched_target text := '';
   resched_reason text := '';

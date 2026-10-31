@@ -987,7 +987,7 @@
 
       // Адміністратор СТО
       if(login.toLowerCase()==='admin'&&password==='sto-2026'){
-        const admUser={name:'Адміністратор СТО',email:'admin@sto-yabluneve.ua',role:'admin',is_admin:true};
+        const admUser={name:'Адміністратор СТО',email:'admin@sto-kyiv.ua',role:'admin',is_admin:true};
         localStorage.setItem('stoUserSession',JSON.stringify(admUser));
         showProfile(admUser);
         if(loginError)loginError.hidden=true;

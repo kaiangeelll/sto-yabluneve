@@ -447,7 +447,7 @@ function fillAdmin(){
     ['name','adminEmail','phone','address','hours','map','whatsapp','viber','telegram','closedDates','closedSlots'].forEach(k=>f.elements[k]?f.elements[k].value=data[k]||'':null);
   }
   const pEl=$('[data-admin-side-phone]');if(pEl)pEl.textContent=data.phone||'+380 68 067 9909';
-  const eEl=$('[data-admin-side-email]');if(eEl)eEl.textContent=data.adminEmail||'admin@sto-yabluneve.ua';
+  const eEl=$('[data-admin-side-email]');if(eEl)eEl.textContent=data.adminEmail||'admin@sto-kyiv.ua';
   const scEl=$('[data-services-count]');if(scEl)scEl.textContent=data.services.length;
   $('[data-admin-services]').innerHTML=data.services.map(row).join('');
   bindRemove();
