@@ -60,11 +60,11 @@
       const key=dateKey(d);
       const isClosed=closedAdmin.includes(key);
 
-      const disabled=isPast||isSunday||isClosed;
+      const disabled=isPast||isClosed;
       let title='';
-      if(isSunday)title='Неділя — вихідний день';
-      else if(isClosed)title='Вихідний день СТО';
+      if(isClosed)title='Вихідний день СТО';
       else if(isPast)title='Минула дата';
+      else if(isSunday)title='Неділя: відчинено 07:00–23:00';
 
       let cls=['cal-day-cell'];
       if(input.value===key)cls.push('selected');

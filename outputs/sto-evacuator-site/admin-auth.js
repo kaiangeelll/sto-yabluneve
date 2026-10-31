@@ -64,21 +64,7 @@
       return;
     }
 
-    const d=new Date(targetDate+'T12:00:00');
-    const day=d.getDay();
-    if(day===0){
-      timeSelect.innerHTML='<option value="" disabled selected>Неділя — вихідний день</option>';
-      timeSelect.disabled=true;
-      if(sendBtn)sendBtn.disabled=true;
-      if(msgEl){
-        msgEl.textContent='У неділю СТО не працює (вихідний). Будь ласка, оберіть будній день або суботу.';
-        msgEl.style.color='#c0392b';
-      }
-      return;
-    }
-
-    let times=['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00'];
-    if(day===6)times=['09:00','10:00','11:00','12:00','13:00','14:00'];
+    let times=['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
 
     let allBookings=[];
     try{allBookings=JSON.parse(localStorage.getItem('stoBookings')||'[]');}catch(e){}
